@@ -81,6 +81,7 @@ export const createSection = createAsyncThunk(
 
 const initialState = {
     classes: [],
+    subjects: [],
     sectionsByClass: {},
     loading: false,
     error: null,
@@ -126,9 +127,41 @@ const academicSlice = createSlice({
                 const classId = action.payload.class_id;
                 if (!state.sectionsByClass[classId]) state.sectionsByClass[classId] = [];
                 state.sectionsByClass[classId].push(action.payload);
+            })
+            .addCase(fetchSubjects.fulfilled, (state, action) => {
+                state.subjects = action.payload;
+            })
+            .addCase(createSubject.fulfilled, (state, action) => {
+                state.subjects.push(action.payload);
             });
     }
 });
+
+export const fetchSubjects = createAsyncThunk(
+    'academic/fetchSubjects',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await api.get('/academic/subjects');
+            if (response.success) return response.data;
+            return rejectWithValue(response.message);
+        } catch (error) {
+            return rejectWithValue(error.message);
+        }
+    }
+);
+
+export const createSubject = createAsyncThunk(
+    'academic/createSubject',
+    async (subjectData, { rejectWithValue }) => {
+        try {
+            const response = await api.post('/academic/subjects', subjectData);
+            if (response.success) return response.data;
+            return rejectWithValue(response.message);
+        } catch (error) {
+            return rejectWithValue(error.message);
+        }
+    }
+);
 
 export const { clearError } = academicSlice.actions;
 export default academicSlice.reducer;

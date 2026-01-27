@@ -270,9 +270,9 @@ const Attendance = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {students.map((student) => (
+                                {students.map((student, index) => (
                                     <tr key={student.student_id}>
-                                        <td><strong>{student.roll_number || '-'}</strong></td>
+                                        <td><strong>{student.roll_number || (index + 1)}</strong></td>
                                         <td>{student.first_name} {student.last_name}</td>
                                         <td>{student.admission_number}</td>
                                         <td>

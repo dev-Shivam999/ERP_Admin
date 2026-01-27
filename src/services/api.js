@@ -76,4 +76,17 @@ export const feeAPI = {
     applyDiscount: (data) => api.post('/fees/discount', data),
 };
 
+// Homework APIs
+export const homeworkAPI = {
+    getByClass: (classId, sectionId, date) => api.get(`/homework/class/${classId}/${sectionId}`, { params: { date } }),
+    getStatus: (homeworkId) => api.get(`/homework/status/${homeworkId}`),
+    updateStatus: (data) => api.post('/homework/update-status', data),
+};
+
+// Payroll APIs
+export const payrollAPI = {
+    getPayrollByMonth: (month, year) => api.get(`/payroll/monthly?month=${month}&year=${year}`),
+    processPayroll: (data) => api.post('/payroll/process', data),
+};
+
 export default api;

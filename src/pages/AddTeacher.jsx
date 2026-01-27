@@ -37,6 +37,8 @@ const AddTeacher = () => {
         { id: 'collect_fees', label: 'Collect Fees', desc: 'Can process fee payments' },
         { id: 'manage_exams', label: 'Manage Exams', desc: 'Schedule exams and enter marks' },
         { id: 'view_reports', label: 'View Reports', desc: 'Financial & academic reports' },
+        { id: 'manage_homework', label: 'Manage Homework', desc: 'Create and review assignments' },
+        { id: 'manage_schedule', label: 'View Schedule', desc: 'Access class timetables' },
     ];
 
     useEffect(() => {

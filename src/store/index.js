@@ -8,6 +8,8 @@ import teachersReducer from './slices/teachersSlice';
 import examsReducer from './slices/examsSlice';
 import calendarReducer from './slices/calendarSlice';
 import academicReducer from './slices/academicSlice';
+import resultsReducer from './slices/resultsSlice';
+import homeworkReducer from './slices/homeworkSlice';
 
 const store = configureStore({
     reducer: {
@@ -20,6 +22,8 @@ const store = configureStore({
         exams: examsReducer,
         calendar: calendarReducer,
         academic: academicReducer,
+        results: resultsReducer,
+        homework: homeworkReducer,
     },
 });
 
