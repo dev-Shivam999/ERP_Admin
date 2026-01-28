@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Save, ArrowLeft, User, IndianRupee, Calendar as CalendarIcon, Receipt, Search, CheckCircle, AlertCircle, Clock, Sparkles, Send, BookOpen } from 'lucide-react';
-import { recordPayment, searchStudents, setSelectedStudent, clearError, fetchPendingFees, fetchFeeMetadata, fetchStudentFees, collectFee } from '../store/slices/feesSlice';
+import { recordPayment, searchStudents, setSelectedStudent, clearError, fetchPendingFees, fetchFeeMetadata, fetchStudentFees, fetchStudentPayments, collectFee } from '../store/slices/feesSlice';
 
 const RecordPayment = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { loading, error, collectLoading, searchLoading, searchResults = [], selectedStudent, studentFees = [] } = useSelector((state) => state.fees || {});
+    const { loading, error, collectLoading, searchLoading, searchResults = [], selectedStudent, studentFees = [], studentPayments = [] } = useSelector((state) => state.fees || {});
 
     const [studentSearch, setStudentSearch] = useState('');
     const [feeTypes, setFeeTypes] = useState([]);
@@ -79,6 +79,7 @@ const RecordPayment = () => {
         setShowSearchDropdown(false);
         if (student?.id) {
             dispatch(fetchStudentFees(student.id));
+            dispatch(fetchStudentPayments(student.id));
         }
     };
 
@@ -490,6 +491,59 @@ const RecordPayment = () => {
                                 </button>
                             </form>
                         </div>
+                    </div>
+                </div>
+
+                {/* Recent Payments */}
+                <div className="card">
+                    <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <h3 className="card-title" style={{ margin: 0 }}>Recent Payments</h3>
+                        <span style={{ color: '#64748b', fontSize: '0.9rem' }}>
+                            Showing latest {Math.min(10, studentPayments.length || 0)} records
+                        </span>
+                    </div>
+                    <div className="card-body">
+                        {!selectedStudent && (
+                            <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
+                                <Search size={36} style={{ marginBottom: '0.6rem', opacity: 0.5 }} />
+                                <div>Select a student to view their payment history.</div>
+                            </div>
+                        )}
+
+                        {selectedStudent && (!studentPayments || studentPayments.length === 0) && (
+                            <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
+                                <CheckCircle size={36} style={{ marginBottom: '0.6rem', color: '#10b981', opacity: 0.6 }} />
+                                <div>No payments recorded yet.</div>
+                            </div>
+                        )}
+
+                        {selectedStudent && studentPayments && studentPayments.length > 0 && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                {studentPayments.slice(0, 10).map((p) => (
+                                    <div key={p.id} style={{
+                                        border: '1px solid #e2e8f0',
+                                        borderRadius: '10px',
+                                        padding: '0.9rem 1rem',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        gap: '1rem'
+                                    }}>
+                                        <div>
+                                            <div style={{ fontWeight: 700, color: '#111827' }}>{p.fee_type_name || p.fee_type || 'Fee'}</div>
+                                            <div style={{ fontSize: '0.9rem', color: '#64748b' }}>
+                                                {p.payment_date || p.created_at ? new Date(p.payment_date || p.created_at).toLocaleDateString() : ''}
+                                                {p.payment_mode ? ` • ${p.payment_mode}` : ''}
+                                            </div>
+                                        </div>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <div style={{ fontWeight: 800, color: '#16a34a' }}>₹{parseFloat(p.amount || 0).toLocaleString()}</div>
+                                            {p.receipt_number && <div style={{ fontSize: '0.85rem', color: '#64748b' }}>Receipt: {p.receipt_number}</div>}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

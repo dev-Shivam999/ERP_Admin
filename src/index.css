@@ -306,6 +306,16 @@ body {
   background: var(--primary-dark);
 }
 
+.btn-secondary {
+  background: var(--gray-100);
+  color: var(--gray-700);
+  border: 1px solid var(--gray-300);
+}
+
+.btn-secondary:hover {
+  background: var(--gray-200);
+}
+
 .btn-success {
   background: var(--secondary);
   color: var(--white);

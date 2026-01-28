@@ -2,18 +2,16 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
-    ArrowLeft, Save, Plus, Trash2, Download, BookOpen, Clock,
-    Sparkles, Calendar, Layers, ShieldCheck, Send, Info, AlertTriangle, Check,
-    Wand2
+    ArrowLeft, Plus, Trash2, BookOpen, Clock, Calendar, Layers, Check
 } from 'lucide-react';
 import { createExam } from '../store/slices/examsSlice';
-import { fetchClasses } from '../store/slices/attendanceSlice';
+import { fetchClasses, createClass } from '../store/slices/academicSlice';
 
 const AddExam = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { loading } = useSelector((state) => state.exams);
-    const { classes } = useSelector((state) => state.attendance);
+    const { classes } = useSelector((state) => state.academic);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -65,7 +63,6 @@ const AddExam = () => {
         const result = await dispatch(createClass({
             name: trimmed,
             numericValue: (classes.length + 1) || 1,
-            monthlyFeeAmount: 0
         }));
 
         if (!result.error) {
@@ -92,7 +89,7 @@ const AddExam = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!formData.name || !formData.startDate || !formData.endDate || selectedClasses.length === 0) {
-            alert('Selection incomplete: Verify classes and schedule dates.');
+            alert('Please fill exam name, dates, and select at least one class.');
             return;
         }
 
@@ -103,226 +100,210 @@ const AddExam = () => {
         }));
 
         if (!result.error) {
-            alert('Timetable Broadcasted: Students and teachers have been notified.');
+            alert('Exam created successfully.');
             navigate('/exams');
         }
     };
 
     return (
-        <div style={{ background: '#f8fafc', minHeight: '100vh', padding: '2rem', fontFamily: "'Inter', sans-serif" }}>
-            <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-                {/* Header */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '3.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                        <button
-                            onClick={() => navigate('/exams')}
-                            style={{ padding: '1.25rem', background: '#fff', borderRadius: '1.5rem', border: '1px solid #e2e8f0', cursor: 'pointer', shadow: '0 10px 15px -3px rgba(0,0,0,0.05)' }}
-                        >
-                            <ArrowLeft size={24} style={{ color: '#64748b' }} />
-                        </button>
-                        <div>
-                            <h2 style={{ fontSize: '2.5rem', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.05em', margin: 0 }}>Establish Timetable</h2>
-                            <p style={{ color: '#64748b', fontWeight: 600, fontSize: '0.875rem', marginTop: '0.25rem' }}>Unified Examination Control Terminal</p>
-                        </div>
+        <div className="page-content">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <button onClick={() => navigate('/exams')} className="btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', height: 42, padding: '0 1rem' }}>
+                        <ArrowLeft size={18} /> Back
+                    </button>
+                    <div>
+                        <h2 className="page-title" style={{ margin: 0 }}>Add Exam</h2>
+                        <div style={{ color: '#64748b', fontWeight: 600 }}>Create an exam and set the timetable.</div>
                     </div>
                 </div>
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <button type="button" className="btn-secondary" onClick={() => navigate('/exams')} style={{ height: 42, padding: '0 1rem' }}>
+                        Cancel
+                    </button>
+                    <button type="submit" form="add-exam-form" className="btn-primary" disabled={loading} style={{ height: 42, padding: '0 1.1rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Plus size={18} /> {loading ? 'Saving…' : 'Create exam'}
+                    </button>
+                </div>
+            </div>
 
-                <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: 'minmax(350px, 1fr) minmax(300px, 0.8fr) minmax(450px, 1.2fr)', gap: '2.5rem', alignItems: 'start' }}>
-
-                    {/* Column 1: Global Parameters */}
-                    <div style={{ background: '#fff', borderRadius: '3rem', padding: '3rem', border: '1px solid #e2e8f0', shadow: '0 25px 50px -12px rgb(0 0 0 / 0.05)', position: 'relative', overflow: 'hidden' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '3rem' }}>
-                            <div style={{ width: '3.5rem', height: '3.5rem', background: '#4f46e5', borderRadius: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}><BookOpen size={24} /></div>
-                            <h3 style={{ textTransform: 'uppercase', letterSpacing: '0.2em', fontSize: '0.85rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>Global Parameters</h3>
+            <form id="add-exam-form" onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '1.25rem', alignItems: 'start' }}>
+                {/* Left: exam details */}
+                <div style={{ display: 'grid', gap: '1.25rem' }}>
+                    <div className="card">
+                        <div className="card-header">
+                            <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <BookOpen size={18} /> Exam details
+                            </h3>
                         </div>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                        <div className="card-body" style={{ display: 'grid', gap: '1rem' }}>
                             <div className="form-group">
-                                <label style={{ fontWeight: 800, fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '1rem', display: 'block', marginLeft: '1rem', letterSpacing: '0.1em' }}>Designation Name</label>
+                                <label className="form-label">Exam name</label>
                                 <input
                                     type="text"
                                     name="name"
                                     value={formData.name}
                                     onChange={handleInputChange}
-                                    placeholder="e.g. ANNUAL MATRIX 2026"
-                                    style={{ height: '4.5rem', width: '100%', borderRadius: '1.5rem', border: '3px solid #f1f5f9', background: '#f8fafc', padding: '0 2rem', fontWeight: 700, fontSize: '1.1rem', outline: 'none' }}
+                                    className="form-input"
+                                    placeholder="e.g. Annual Exam 2026"
                                     required
                                 />
                             </div>
+
                             <div className="form-group">
-                                <label style={{ fontWeight: 800, fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '1rem', display: 'block', marginLeft: '1rem', letterSpacing: '0.1em' }}>Classification Type</label>
-                                <select
-                                    name="examType"
-                                    value={formData.examType}
-                                    onChange={handleInputChange}
-                                    style={{ height: '4.5rem', width: '100%', borderRadius: '1.5rem', border: '3px solid #f1f5f9', background: '#f8fafc', padding: '0 2rem', fontWeight: 700, fontSize: '1.1rem', outline: 'none' }}
-                                >
+                                <label className="form-label">Exam type</label>
+                                <select name="examType" value={formData.examType} onChange={handleInputChange} className="form-select">
                                     <option value="unit_test">Unit Test</option>
                                     <option value="mid_term">Mid Term / Half Yearly</option>
                                     <option value="final">Final / Annual Exam</option>
                                     <option value="class_test">Class Test</option>
                                 </select>
                             </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                                <div>
-                                    <label style={{ fontWeight: 800, fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '1rem', display: 'block', marginLeft: '1rem', letterSpacing: '0.1em' }}>Start Marker</label>
-                                    <input type="date" name="startDate" value={formData.startDate} onChange={handleInputChange} style={{ height: '4rem', width: '100%', borderRadius: '1.5rem', border: '3px solid #f1f5f9', background: '#f8fafc', padding: '0 1.5rem', fontWeight: 700, outline: 'none' }} required />
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                <div className="form-group">
+                                    <label className="form-label">Start date</label>
+                                    <input type="date" name="startDate" value={formData.startDate} onChange={handleInputChange} className="form-input" required />
                                 </div>
-                                <div>
-                                    <label style={{ fontWeight: 800, fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '1rem', display: 'block', marginLeft: '1rem', letterSpacing: '0.1em' }}>End Marker</label>
-                                    <input type="date" name="endDate" value={formData.endDate} onChange={handleInputChange} style={{ height: '4rem', width: '100%', borderRadius: '1.5rem', border: '3px solid #f1f5f9', background: '#f8fafc', padding: '0 1.5rem', fontWeight: 700, outline: 'none' }} required />
+                                <div className="form-group">
+                                    <label className="form-label">End date</label>
+                                    <input type="date" name="endDate" value={formData.endDate} onChange={handleInputChange} className="form-input" required />
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Column 2: Class Selection with Checkboxes */}
-                    <div style={{ background: '#fff', borderRadius: '3rem', padding: '3rem', border: '1px solid #e2e8f0', shadow: '0 25px 50px -12px rgb(0 0 0 / 0.05)', minHeight: '600px', display: 'flex', flexDirection: 'column' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '3rem' }}>
-                            <div style={{ width: '3.5rem', height: '3.5rem', background: '#0f172a', borderRadius: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}><Layers size={24} /></div>
-                            <h3 style={{ textTransform: 'uppercase', letterSpacing: '0.2rem', fontSize: '0.85rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>Select Participating Classes</h3>
+                    <div className="card">
+                        <div className="card-header">
+                            <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <Clock size={18} /> Subjects & timetable
+                            </h3>
                         </div>
+                        <div className="card-body" style={{ display: 'grid', gap: '0.75rem' }}>
+                            {subjects.map((sub, idx) => (
+                                <div key={idx} style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: '0.9rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'center', marginBottom: '0.75rem' }}>
+                                        <div style={{ fontWeight: 800, color: '#111827' }}>Subject #{idx + 1}</div>
+                                        <button type="button" className="btn-secondary" onClick={() => removeSubject(idx)} style={{ height: 34, width: 34, padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: '#fff1f2', borderColor: '#fecdd3', color: '#e11d48' }}>
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
 
-                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem', overflowY: 'auto', paddingRight: '1rem' }}>
-                            {/* Quick Add Input */}
-                            <div style={{ padding: '0 0.5rem 1rem' }}>
-                                <div style={{ position: 'relative' }}>
-                                    <input
-                                        type="text"
-                                        placeholder="+ Quick Establish (e.g. Class 10)..."
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                                e.preventDefault();
-                                                handleQuickAddClass(e.target.value);
-                                                e.target.value = '';
-                                            }
-                                        }}
-                                        style={{
-                                            width: '100%',
-                                            padding: '1.25rem 3.5rem 1.25rem 1.5rem',
-                                            borderRadius: '1.5rem',
-                                            border: '3px dashed #e2e8f0',
-                                            background: '#fff',
-                                            fontWeight: 800,
-                                            fontSize: '0.85rem',
-                                            color: '#4f46e5',
-                                            outline: 'none',
-                                            transition: 'all 0.2s'
-                                        }}
-                                    />
-                                    <div style={{ position: 'absolute', right: '1.25rem', top: '50%', transform: 'translateY(-50%)', color: '#cbd5e1' }}>
-                                        <Wand2 size={18} />
+                                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '0.75rem' }}>
+                                        <div className="form-group" style={{ marginBottom: 0 }}>
+                                            <label className="form-label">Name</label>
+                                            <input type="text" className="form-input" value={sub.name} onChange={(e) => handleSubjectChange(idx, 'name', e.target.value)} />
+                                        </div>
+                                        <div className="form-group" style={{ marginBottom: 0 }}>
+                                            <label className="form-label">Date</label>
+                                            <input type="date" className="form-input" value={sub.date} onChange={(e) => handleSubjectChange(idx, 'date', e.target.value)} />
+                                        </div>
+                                        <div className="form-group" style={{ marginBottom: 0 }}>
+                                            <label className="form-label">Start time</label>
+                                            <input type="time" className="form-input" value={sub.startTime} onChange={(e) => handleSubjectChange(idx, 'startTime', e.target.value)} />
+                                        </div>
+                                    </div>
+
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem', marginTop: '0.75rem' }}>
+                                        <div className="form-group" style={{ marginBottom: 0 }}>
+                                            <label className="form-label">Max marks</label>
+                                            <input type="number" className="form-input" value={sub.maxMarks} onChange={(e) => handleSubjectChange(idx, 'maxMarks', e.target.value)} />
+                                        </div>
+                                        <div className="form-group" style={{ marginBottom: 0 }}>
+                                            <label className="form-label">Passing marks</label>
+                                            <input type="number" className="form-input" value={sub.passingMarks} onChange={(e) => handleSubjectChange(idx, 'passingMarks', e.target.value)} />
+                                        </div>
+                                        <div className="form-group" style={{ marginBottom: 0 }}>
+                                            <label className="form-label">Duration (hours)</label>
+                                            <input type="number" className="form-input" value={sub.duration} onChange={(e) => handleSubjectChange(idx, 'duration', e.target.value)} />
+                                        </div>
                                     </div>
                                 </div>
-                                <p style={{ fontSize: '10px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '0.75rem', marginLeft: '0.5rem' }}>Type & Press Enter to Establish</p>
-                            </div>
+                            ))}
 
+                            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    placeholder="New subject name…"
+                                    value={newSubject.name}
+                                    onChange={(e) => setNewSubject({ ...newSubject, name: e.target.value })}
+                                    style={{ flex: 1, minWidth: 240 }}
+                                />
+                                <button type="button" className="btn-primary" onClick={addSubject} style={{ height: 42, padding: '0 1rem' }}>
+                                    Add subject
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right: class selection */}
+                <div className="card">
+                    <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                        <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+                            <Layers size={18} /> Classes
+                        </h3>
+                        <div style={{ color: '#64748b', fontWeight: 700, fontSize: '0.9rem' }}>
+                            Selected: {selectedClasses.length}
+                        </div>
+                    </div>
+                    <div className="card-body" style={{ display: 'grid', gap: '0.75rem' }}>
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                            <label className="form-label">Quick add class (press Enter)</label>
+                            <input
+                                type="text"
+                                className="form-input"
+                                placeholder="e.g. Class 10"
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        handleQuickAddClass(e.target.value);
+                                        e.target.value = '';
+                                    }
+                                }}
+                            />
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: 520, overflow: 'auto' }}>
                             {classes.length > 0 ? classes.map(cls => (
                                 <label
                                     key={cls.id}
                                     style={{
                                         display: 'flex',
                                         alignItems: 'center',
-                                        gap: '1.5rem',
-                                        padding: '1.25rem 2rem',
-                                        borderRadius: '1.5rem',
-                                        background: selectedClasses.includes(cls.id) ? '#f5f3ff' : '#f8fafc',
-                                        border: '3px solid',
-                                        borderColor: selectedClasses.includes(cls.id) ? '#4f46e5' : '#f1f5f9',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+                                        gap: '0.75rem',
+                                        padding: '0.75rem 0.9rem',
+                                        borderRadius: 12,
+                                        border: `1px solid ${selectedClasses.includes(cls.id) ? '#c7d2fe' : '#e2e8f0'}`,
+                                        background: selectedClasses.includes(cls.id) ? '#eef2ff' : '#fff',
+                                        cursor: 'pointer'
                                     }}
                                 >
-                                    <div style={{
-                                        width: '28px',
-                                        height: '28px',
-                                        borderRadius: '8px',
-                                        border: '3px solid',
-                                        borderColor: selectedClasses.includes(cls.id) ? '#4f46e5' : '#cbd5e1',
-                                        background: selectedClasses.includes(cls.id) ? '#4f46e5' : 'transparent',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        color: '#fff'
-                                    }}>
-                                        {selectedClasses.includes(cls.id) && <Check size={18} strokeWidth={4} />}
-                                    </div>
                                     <input
                                         type="checkbox"
                                         checked={selectedClasses.includes(cls.id)}
                                         onChange={() => handleClassToggle(cls.id)}
-                                        style={{ display: 'none' }}
                                     />
-                                    <span style={{ fontSize: '1.1rem', fontWeight: 900, color: selectedClasses.includes(cls.id) ? '#4338ca' : '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                        {cls.name}
-                                    </span>
+                                    <div style={{ fontWeight: 800, color: '#111827' }}>{cls.name}</div>
                                 </label>
                             )) : (
-                                <div style={{ textAlign: 'center', padding: '4rem 2rem', opacity: 0.3 }}>
-                                    <Layers size={48} style={{ margin: '0 auto 1rem' }} />
-                                    <p style={{ fontWeight: 800, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>No Classes Found</p>
+                                <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
+                                    <Layers size={40} style={{ marginBottom: '0.75rem', opacity: 0.6 }} />
+                                    <div style={{ fontWeight: 700 }}>No classes found.</div>
                                 </div>
                             )}
                         </div>
 
-                        <div style={{ background: '#eef2ff', borderRadius: '2rem', padding: '1.5rem', border: '1px solid #c7d2fe', display: 'flex', gap: '1rem', alignItems: 'center', marginTop: '2.5rem' }}>
-                            <Send size={24} style={{ color: '#4f46e5' }} />
-                            <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#4338ca', margin: 0 }}>Saving this exam will send automatic portal notifications to **Students** and **Class Teachers** of the selected cohorts.</p>
+                        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '0.9rem', color: '#64748b', fontWeight: 600 }}>
+                            Saving this exam will notify students and class teachers for the selected classes.
                         </div>
                     </div>
-
-                    {/* Column 3: Subject Timeline Matrix */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                        <div style={{ background: '#0f172a', borderRadius: '3.5rem', padding: '3.5rem', color: '#fff', shadow: '0 25px 75px -12px rgb(0 0 0 / 0.3)', border: '10px solid #fff' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '3.5rem' }}>
-                                <div style={{ width: '4rem', height: '4rem', background: '#fff', borderRadius: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0f172a' }}><Clock size={28} /></div>
-                                <h4 style={{ textTransform: 'uppercase', letterSpacing: '0.4rem', fontSize: '0.9rem', fontWeight: 900, color: '#fff', margin: 0 }}>Subject Timeline Matrix</h4>
-                            </div>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                                {subjects.map((sub, idx) => (
-                                    <div key={idx} style={{ background: 'rgba(255,255,255,0.06)', borderRadius: '2rem', padding: '1.75rem', display: 'grid', gridTemplateColumns: '2fr 1.5fr 1fr 40px', gap: '1.5rem', alignItems: 'center', border: '1px solid rgba(255,255,255,0.1)' }}>
-                                        <div>
-                                            <p style={{ fontSize: '0.65rem', fontWeight: 900, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.1em' }}>Subject Link</p>
-                                            <input type="text" value={sub.name} onChange={(e) => handleSubjectChange(idx, 'name', e.target.value)} style={{ background: 'transparent', border: 'none', color: '#fff', fontWeight: 900, fontSize: '1.25rem', outline: 'none', width: '100%', letterSpacing: '-0.02em' }} />
-                                        </div>
-                                        <div>
-                                            <p style={{ fontSize: '0.65rem', fontWeight: 900, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.1em' }}>Temporal Marker</p>
-                                            <input type="date" value={sub.date} onChange={(e) => handleSubjectChange(idx, 'date', e.target.value)} style={{ background: 'transparent', border: 'none', color: '#fff', fontWeight: 800, fontSize: '0.9rem', outline: 'none' }} />
-                                        </div>
-                                        <div>
-                                            <p style={{ fontSize: '0.65rem', fontWeight: 900, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.1em' }}>Quantum</p>
-                                            <p style={{ fontWeight: 900, color: '#fff', margin: 0, fontSize: '1rem' }}>{sub.maxMarks}M | {sub.duration}H</p>
-                                        </div>
-                                        <button type="button" onClick={() => removeSubject(idx)} style={{ background: 'rgba(239, 68, 68, 0.15)', border: 'none', color: '#ef4444', borderRadius: '1rem', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Trash2 size={20} /></button>
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* Add Flow */}
-                            <div style={{ marginTop: '3rem', padding: '2rem', background: 'rgba(255,255,255,0.03)', borderRadius: '2.5rem', display: 'flex', gap: '1.5rem', alignItems: 'center', border: '3px dashed rgba(255,255,255,0.1)' }}>
-                                <input
-                                    type="text"
-                                    placeholder="Annotate New Subject..."
-                                    value={newSubject.name}
-                                    onChange={(e) => setNewSubject({ ...newSubject, name: e.target.value })}
-                                    style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: '#fff', fontWeight: 700, fontSize: '1.1rem' }}
-                                />
-                                <button type="button" onClick={addSubject} style={{ padding: '1.1rem 2.5rem', background: '#fff', color: '#0f172a', fontWeight: 900, borderRadius: '1.25rem', border: 'none', cursor: 'pointer', textTransform: 'uppercase', fontSize: '11px', letterSpacing: '0.15em' }}>Apply Entry</button>
-                            </div>
-                        </div>
-
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1.5rem', marginTop: 'auto' }}>
-                            <button type="button" onClick={() => navigate('/exams')} style={{ padding: '1.5rem 2.5rem', background: 'transparent', border: '3px solid #e2e8f0', borderRadius: '2rem', fontWeight: 900, color: '#64748b', cursor: 'pointer', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Discard Protocol</button>
-                            <button type="submit" disabled={loading} style={{ padding: '1.5rem 4rem', background: '#4f46e5', border: 'none', borderRadius: '2rem', fontWeight: 900, color: '#fff', cursor: 'pointer', shadow: '0 25px 30px -10px rgba(79, 70, 229, 0.3)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.2em', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                {loading ? 'SYNCHRONIZING...' : <><ShieldCheck size={22} /> Authorize Cycle</>}
-                            </button>
-                        </div>
-                    </div>
-                </form>
-            </div>
+                </div>
+            </form>
         </div>
     );
 };
 
 export default AddExam;
+
