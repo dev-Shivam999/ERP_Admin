@@ -49,6 +49,22 @@ export const searchStudentByAdmission = createAsyncThunk(
     }
 );
 
+export const searchStudents = createAsyncThunk(
+    'fees/searchStudents',
+    async (searchTerm, { rejectWithValue }) => {
+        try {
+            if (!String(searchTerm || '').trim()) return [];
+            const response = await api.get('/students', { params: { search: searchTerm } });
+            if (response.success) {
+                return response.data.students || response.data || [];
+            }
+            return rejectWithValue(response.message || 'Failed to search students');
+        } catch (error) {
+            return rejectWithValue(error.message || 'Failed to search students');
+        }
+    }
+);
+
 export const collectFee = createAsyncThunk(
     'fees/collect',
     async (data, { rejectWithValue }) => {
@@ -269,6 +285,7 @@ const initialState = {
     },
     selectedStudent: null,
     studentFees: [],
+    searchResults: [],
     payments: [],
     studentPayments: [],
     pendingFees: [],
@@ -294,10 +311,14 @@ const feesSlice = createSlice({
         clearError: (state) => {
             state.error = null;
         },
+        setSelectedStudent: (state, action) => {
+            state.selectedStudent = action.payload;
+        },
         clearSelectedStudent: (state) => {
             state.selectedStudent = null;
             state.studentFees = [];
             state.studentPayments = [];
+            state.searchResults = [];
         },
         clearLastReceipt: (state) => {
             state.lastReceipt = null;
@@ -340,6 +361,19 @@ const feesSlice = createSlice({
             })
             .addCase(searchStudentByAdmission.rejected, (state, action) => {
                 state.searchLoading = false;
+                state.error = action.payload;
+            })
+            // Search students (list)
+            .addCase(searchStudents.pending, (state) => {
+                state.searchLoading = true;
+            })
+            .addCase(searchStudents.fulfilled, (state, action) => {
+                state.searchLoading = false;
+                state.searchResults = action.payload || [];
+            })
+            .addCase(searchStudents.rejected, (state, action) => {
+                state.searchLoading = false;
+                state.searchResults = [];
                 state.error = action.payload;
             })
             // Fetch student fees
@@ -481,5 +515,5 @@ const feesSlice = createSlice({
     },
 });
 
-export const { clearError, clearSelectedStudent, clearLastReceipt } = feesSlice.actions;
+export const { clearError, setSelectedStudent, clearSelectedStudent, clearLastReceipt } = feesSlice.actions;
 export default feesSlice.reducer;

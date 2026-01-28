@@ -2,16 +2,17 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Save, ArrowLeft, User, IndianRupee, Calendar as CalendarIcon, Receipt, Search, CheckCircle, AlertCircle, Clock, Sparkles, Send, BookOpen } from 'lucide-react';
-import { recordPayment, searchStudentByAdmission, clearError, fetchPendingFees, fetchFeeMetadata, fetchStudentFees, collectFee } from '../store/slices/feesSlice';
+import { recordPayment, searchStudents, setSelectedStudent, clearError, fetchPendingFees, fetchFeeMetadata, fetchStudentFees, collectFee } from '../store/slices/feesSlice';
 
 const RecordPayment = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { loading, error, collectLoading, selectedStudent, studentFees = [] } = useSelector((state) => state.fees || {});
+    const { loading, error, collectLoading, searchLoading, searchResults = [], selectedStudent, studentFees = [] } = useSelector((state) => state.fees || {});
 
     const [studentSearch, setStudentSearch] = useState('');
     const [feeTypes, setFeeTypes] = useState([]);
     const [manualEntry, setManualEntry] = useState(false);
+    const [showSearchDropdown, setShowSearchDropdown] = useState(false);
 
     const [paymentForm, setPaymentForm] = useState({
         amount: '',
@@ -42,15 +43,42 @@ const RecordPayment = () => {
         }
     }, [error, dispatch]);
 
-    const handleSearch = async (e) => {
-        if (e) e.preventDefault();
-        if (!studentSearch.trim()) return;
+    const runSearch = (term) => {
+        const q = String(term || '').trim();
+        if (!q) {
+            setShowSearchDropdown(false);
+            return;
+        }
+        dispatch(searchStudents(q));
+        setShowSearchDropdown(true);
+    };
 
-        const result = await dispatch(searchStudentByAdmission(studentSearch));
-        if (result.meta.requestStatus === 'fulfilled' && result.payload) {
-            dispatch(fetchStudentFees(result.payload.id));
-        } else {
-            alert('Student not localized in the directory.');
+    useEffect(() => {
+        const q = studentSearch.trim();
+        if (q.length < 2) {
+            setShowSearchDropdown(false);
+            return;
+        }
+
+        const t = setTimeout(() => {
+            runSearch(q);
+        }, 350);
+
+        return () => clearTimeout(t);
+    }, [studentSearch]);
+
+    useEffect(() => {
+        if (studentSearch.trim() && searchResults?.length) {
+            setShowSearchDropdown(true);
+        }
+    }, [searchResults, studentSearch]);
+
+    const selectStudent = async (student) => {
+        dispatch(setSelectedStudent(student));
+        setStudentSearch(student?.admission_number || `${student?.first_name || ''} ${student?.last_name || ''}`.trim());
+        setShowSearchDropdown(false);
+        if (student?.id) {
+            dispatch(fetchStudentFees(student.id));
         }
     };
 
@@ -118,9 +146,9 @@ const RecordPayment = () => {
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
                 {/* Search Card */}
-                <div className="card">
-                    <div className="card-body">
-                        <form onSubmit={handleSearch} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end' }}>
+                <div className="card" style={{ overflow: 'visible' }}>
+                    <div className="card-body" style={{ position: 'relative', overflow: 'visible' }}>
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end' }}>
                             <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
                                 <label className="form-label">Search Student</label>
                                 <div style={{ position: 'relative' }}>
@@ -132,13 +160,88 @@ const RecordPayment = () => {
                                         placeholder="Enter Admission Number or Name..."
                                         value={studentSearch}
                                         onChange={(e) => setStudentSearch(e.target.value)}
+                                        onFocus={() => studentSearch.trim() && setShowSearchDropdown(true)}
+                                        onBlur={() => setTimeout(() => setShowSearchDropdown(false), 150)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                runSearch(studentSearch);
+                                            }
+                                        }}
                                     />
+
+                                    {showSearchDropdown && studentSearch.trim() && (
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: 'calc(100% + 8px)',
+                                            left: 0,
+                                            right: 0,
+                                            background: '#fff',
+                                            border: '1px solid #e2e8f0',
+                                            borderRadius: '12px',
+                                            boxShadow: '0 10px 25px rgba(15, 23, 42, 0.12)',
+                                            overflow: 'hidden',
+                                            zIndex: 50
+                                        }}>
+                                            {searchLoading ? (
+                                                <div style={{ padding: '0.9rem 1rem', color: '#64748b' }}>Searching…</div>
+                                            ) : (searchResults?.length ? (
+                                                <div style={{ maxHeight: '280px', overflow: 'auto' }}>
+                                                    {searchResults.slice(0, 10).map((s) => (
+                                                        <button
+                                                            key={s.id}
+                                                            type="button"
+                                                            onClick={() => selectStudent(s)}
+                                                            style={{
+                                                                width: '100%',
+                                                                textAlign: 'left',
+                                                                padding: '0.85rem 1rem',
+                                                                border: 0,
+                                                                background: 'transparent',
+                                                                cursor: 'pointer'
+                                                            }}
+                                                        >
+                                                            <div style={{ fontWeight: 700, color: '#111827' }}>
+                                                                {s.first_name} {s.last_name}
+                                                                <span style={{ marginLeft: '0.5rem', fontWeight: 700, color: '#4f46e5' }}>
+                                                                    ({s.admission_number})
+                                                                </span>
+                                                            </div>
+                                                            <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
+                                                                {s.class_name} {s.section_name ? `- ${s.section_name}` : ''}
+                                                            </div>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <div style={{ padding: '0.9rem 1rem', color: '#b45309', background: '#fff7ed' }}>
+                                                    No students found.
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-                            <button type="submit" className="btn-primary" disabled={loading} style={{ height: '42px', padding: '0 2rem' }}>
-                                {loading ? 'Searching...' : 'Search'}
+                            <button
+                                type="button"
+                                className="btn-primary"
+                                disabled={!studentSearch.trim()}
+                                style={{ height: '42px', padding: '0 1.25rem' }}
+                                onClick={() => runSearch(studentSearch)}
+                            >
+                                {searchLoading ? 'Searching…' : 'Search'}
                             </button>
-                        </form>
+                            <button
+                                type="button"
+                                className="btn-secondary"
+                                disabled={!selectedStudent}
+                                style={{ height: '42px', padding: '0 2rem' }}
+                                onClick={() => selectedStudent?.id && dispatch(fetchStudentFees(selectedStudent.id))}
+                                title={!selectedStudent ? 'Select a student first' : 'Refresh dues'}
+                            >
+                                {loading ? 'Refreshing…' : 'Refresh Dues'}
+                            </button>
+                        </div>
 
                         {selectedStudent && (
                             <div style={{
