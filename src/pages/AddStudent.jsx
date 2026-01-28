@@ -50,6 +50,7 @@ const AddStudent = () => {
         hostelRequired: false,
         paymentMode: 'monthly', // 'monthly' or 'installment'
         installmentPlanId: '',
+        status: 'active',
     });
 
     const streams = ['Science', 'Commerce', 'Arts/Humanities'];
@@ -115,6 +116,7 @@ const AddStudent = () => {
                 hostelRequired: selectedStudent.hostel_required || false,
                 paymentMode: selectedStudent.installment_plan_id ? 'installment' : 'monthly',
                 installmentPlanId: selectedStudent.installment_plan_id || '',
+                status: selectedStudent.status || 'active',
             });
 
             // If parents list exists, map names
@@ -306,6 +308,24 @@ const AddStudent = () => {
                                     maxLength={12}
                                 />
                             </div>
+
+                            {isEditMode && (
+                                <div className="form-group">
+                                    <label className="form-label">Status</label>
+                                    <select
+                                        className="form-select"
+                                        name="status"
+                                        value={formData.status}
+                                        onChange={handleInputChange}
+                                        style={{ borderColor: formData.status === 'active' ? '#10b981' : '#ef4444' }}
+                                    >
+                                        <option value="active">Active</option>
+                                        <option value="inactive">Inactive</option>
+                                        <option value="suspended">Suspended</option>
+                                        <option value="left">Left</option>
+                                    </select>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
