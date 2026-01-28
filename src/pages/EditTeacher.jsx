@@ -112,12 +112,18 @@ const EditTeacher = () => {
     }, [formData.classId, classes]);
 
     const handleSubjectRowChange = (index, field, value) => {
+        console.log(`📝 Row ${index} - ${field} changed to:`, value);
         const newRows = [...subjectRows];
         newRows[index] = { ...newRows[index], [field]: value };
 
         // Reset section if class changes
         if (field === 'classId') {
+            console.log(`🔄 Resetting section for row ${index}`);
             newRows[index].sectionId = '';
+
+            // Log available sections for the new class
+            const selectedClass = classes.find(c => c.id === value);
+            console.log(`📚 Available sections for class ${value}:`, selectedClass?.sections);
         }
         setSubjectRows(newRows);
     };

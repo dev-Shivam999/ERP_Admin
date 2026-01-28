@@ -89,4 +89,15 @@ export const payrollAPI = {
     processPayroll: (data) => api.post('/payroll/process', data),
 };
 
+// Exam APIs
+export const examAPI = {
+    getAll: () => api.get('/exams'),
+    getById: (id) => api.get(`/exams/${id}`),
+    create: (data) => api.post('/exams', data),
+    generateAdmitCards: (id, data) => api.post(`/exams/${id}/admit-cards/generate`, data),
+    issueAdmitCard: (id, data) => api.post(`/exams/${id}/admit-cards/issue`, data),
+    getStudentsStatus: (id, params) => api.get(`/exams/${id}/admit-card-status`, { params }),
+    getAdmitCard: (id, params) => api.get(`/exams/${id}/admit-card`, { params }),
+};
+
 export default api;

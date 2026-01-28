@@ -16,6 +16,7 @@ import {
   X,
   Layers,
   BarChart3,
+  FileText,
 } from "lucide-react";
 import { logout } from "../store/slices/authSlice";
 
@@ -43,6 +44,7 @@ const Layout = ({ title, children }) => {
     { path: "/homework", icon: BookOpen, label: "Homework" },
     { path: "/fees", icon: IndianRupee, label: "Fee Collection" },
     { path: "/exams", icon: BookOpen, label: "Exams & Results" },
+    { path: "/exams/admit-cards", icon: FileText, label: "Admit Cards" },
     { path: "/results", icon: BarChart3, label: "Results Management" },
     { path: "/teachers", icon: GraduationCap, label: "Teachers" },
     { path: "/payroll", icon: IndianRupee, label: "Payroll" },

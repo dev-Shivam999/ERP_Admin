@@ -24,6 +24,7 @@ import Academic from "./pages/Academic";
 import CollectionDetail from "./pages/CollectionDetail";
 import Homework from "./pages/Homework";
 import Payroll from "./pages/Payroll";
+import AdmitCardManager from "./pages/AdmitCardManager";
 import { Toaster } from "react-hot-toast";
 import "./index.css";
 
@@ -196,6 +197,17 @@ function AppRoutes() {
           <ProtectedRoute>
             <PageWrapper title="Edit Exam">
               <EditExam />
+            </PageWrapper>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/exams/admit-cards"
+        element={
+          <ProtectedRoute>
+            <PageWrapper title="Admit Cards">
+              <AdmitCardManager />
             </PageWrapper>
           </ProtectedRoute>
         }
