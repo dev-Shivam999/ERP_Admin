@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Save, ArrowLeft, User, IndianRupee, Calendar as CalendarIcon, Receipt, Search, CheckCircle, AlertCircle, Clock, Sparkles, Send, BookOpen } from 'lucide-react';
-import { recordPayment, searchStudents, setSelectedStudent, clearError, fetchPendingFees, fetchFeeMetadata, fetchStudentFees, fetchStudentPayments, collectFee } from '../store/slices/feesSlice';
+import { recordPayment, searchStudents, setSelectedStudent, clearError, fetchPendingFees, fetchFeeMetadata, fetchStudentFees, fetchStudentPayments, collectFee, initializeFeeStructures } from '../store/slices/feesSlice';
 
 const RecordPayment = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { loading, error, collectLoading, searchLoading, searchResults = [], selectedStudent, studentFees = [], studentPayments = [] } = useSelector((state) => state.fees || {});
+    const { loading, error, collectLoading, searchLoading, searchResults = [], selectedStudent, studentFees = [], studentPayments = [], totals } = useSelector((state) => state.fees || {});
 
     const [studentSearch, setStudentSearch] = useState('');
     const [feeTypes, setFeeTypes] = useState([]);
@@ -97,9 +97,18 @@ const RecordPayment = () => {
 
     const handlePayment = async (e) => {
         e.preventDefault();
-        if (!paymentForm.amount || !selectedStudent) {
-            alert('Selection incomplete: Missing student or quantum.');
+        if (!selectedStudent || !paymentForm.amount) {
+            alert('Selection incomplete: Missing student or amount.');
             return;
+        }
+
+        // Validation: Not more than pending balance (unless it's 'other')
+        if (paymentForm.feeType !== 'other' && totals?.breakdown) {
+            const relevantBreakdown = totals.breakdown.find(b => (b.originalName || b.name).toLowerCase() === paymentForm.feeType);
+            if (relevantBreakdown && Number(paymentForm.amount) > Number(relevantBreakdown.pending)) {
+                alert(`Payment amount (₹${paymentForm.amount}) cannot be more than the pending balance (₹${relevantBreakdown.pending.toLocaleString()}) for this fee type.`);
+                return;
+            }
         }
 
         let result;
@@ -127,11 +136,24 @@ const RecordPayment = () => {
         if (result.meta.requestStatus === 'fulfilled') {
             alert('Payment successfully recorded.');
             dispatch(fetchPendingFees({}));
+            if (selectedStudent?.id) {
+                dispatch(fetchStudentFees(selectedStudent.id));
+                dispatch(fetchStudentPayments(selectedStudent.id));
+            }
             navigate('/fees');
         }
     };
 
-    const activeDues = studentFees.filter(f => f.amount_pending > 0);
+    const activeDues = studentFees.filter(f => parseFloat(f.amount_pending || 0) > 0);
+
+    const handleSyncFees = async () => {
+        const result = await dispatch(initializeFeeStructures());
+        if (result.meta.requestStatus === 'fulfilled') {
+            if (selectedStudent) {
+                dispatch(fetchStudentFees(selectedStudent.id));
+            }
+        }
+    };
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
     return (
@@ -192,7 +214,10 @@ const RecordPayment = () => {
                                                         <button
                                                             key={s.id}
                                                             type="button"
-                                                            onClick={() => selectStudent(s)}
+                                                            onMouseDown={(e) => {
+                                                                e.preventDefault();
+                                                                selectStudent(s);
+                                                            }}
                                                             style={{
                                                                 width: '100%',
                                                                 textAlign: 'left',
@@ -269,7 +294,7 @@ const RecordPayment = () => {
                                 </div>
                                 <div style={{ flex: 1 }}>
                                     <h3 style={{ margin: '0 0 0.25rem 0', color: '#111827', fontSize: '1.125rem' }}>
-                                        {selectedStudent.first_name} {selectedStudent.last_name}
+                                        {selectedStudent.first_name} {selectedStudent.last_name || ''}
                                     </h3>
                                     <div style={{ display: 'flex', gap: '1rem', fontSize: '0.875rem' }}>
                                         <span style={{ color: '#4f46e5', fontWeight: 600 }}>ID: {selectedStudent.admission_number}</span>
@@ -279,7 +304,7 @@ const RecordPayment = () => {
                                 <div style={{ textAlign: 'right' }}>
                                     <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>Outstanding Balance</p>
                                     <p style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, color: '#e11d48' }}>
-                                        ₹{activeDues.reduce((s, f) => s + parseFloat(f.amount_pending), 0).toLocaleString()}
+                                        ₹{(totals?.totalPending || 0).toLocaleString()}
                                     </p>
                                 </div>
                             </div>
@@ -305,48 +330,88 @@ const RecordPayment = () => {
                         <div className="card-body">
                             {selectedStudent ? (
                                 <>
-                                    {activeDues.length === 0 && (
-                                        <div style={{
-                                            padding: '1.25rem',
-                                            borderRadius: '12px',
-                                            background: '#fef3c7',
-                                            border: '1px solid #fcd34d',
-                                            marginBottom: '1.5rem',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            gap: '0.5rem'
-                                        }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#92400e', fontWeight: 700 }}>
-                                                <AlertCircle size={18} />
-                                                No recorded dues found
+                                    {activeDues.length === 0 ? (
+                                        <div style={{ padding: '1.5rem', background: '#fffef3', borderRadius: 12, border: '1px solid #fef3c7' }}>
+                                            <div style={{ color: '#d97706', fontWeight: 700, marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', borderRadius: '50%', background: '#fffbeb', color: '#d97706' }}>
+                                                    <AlertCircle size={20} />
+                                                </div>
+                                                <span style={{ fontSize: '1.05rem' }}>Pending fees by type</span>
                                             </div>
-                                            <p style={{ margin: 0, fontSize: '0.875rem', color: '#b45309' }}>
-                                                The system shows no unpaid fee records for this student.
+                                            <p style={{ color: '#92400e', fontSize: '0.875rem', margin: '0 0 1rem 0' }}>
+                                                Breakdown of outstanding balance from structure:
                                             </p>
-                                            <p style={{ margin: '0.25rem 0 0 0', fontWeight: 600, color: '#92400e' }}>
-                                                Expected monthly fee: ₹{parseFloat(selectedStudent.expected_monthly_fee || 0).toLocaleString()}
-                                            </p>
-                                            <button
-                                                className="btn-primary"
-                                                style={{ marginTop: '0.25rem', padding: '0.5rem 1rem', fontSize: '0.875rem', width: 'fit-content', background: '#d97706', borderColor: '#d97706' }}
-                                                onClick={() => {
-                                                    setPaymentForm({
-                                                        ...paymentForm,
-                                                        amount: selectedStudent.expected_monthly_fee,
-                                                        feeType: 'tuition',
-                                                        month: new Date().getMonth() + 1,
-                                                        year: new Date().getFullYear(),
-                                                        studentFeeId: null
-                                                    });
-                                                    setManualEntry(true);
-                                                }}
-                                            >
-                                                Use Expected Fee
-                                            </button>
-                                        </div>
-                                    )}
 
-                                    {activeDues.length > 0 ? (
+                                            <div style={{ background: '#fff', borderRadius: 8, border: '1px solid #fde68a', overflow: 'hidden', marginBottom: '1.25rem' }}>
+                                                {totals?.breakdown?.filter(b => b.pending > 0).map((b, idx, arr) => (
+                                                    <div
+                                                        key={b.name}
+                                                        onClick={() => {
+                                                            setPaymentForm({
+                                                                ...paymentForm,
+                                                                amount: b.pending,
+                                                                feeType: (b.originalName || b.name).toLowerCase(),
+                                                                month: new Date().getMonth() + 1,
+                                                                year: new Date().getFullYear(),
+                                                                studentFeeId: null
+                                                            });
+                                                            setManualEntry(true);
+                                                        }}
+                                                        style={{
+                                                            padding: '0.75rem 1rem',
+                                                            display: 'flex',
+                                                            justifyContent: 'space-between',
+                                                            borderBottom: idx === arr.length - 1 ? 'none' : '1px solid #fef3c7',
+                                                            alignItems: 'center',
+                                                            cursor: 'pointer',
+                                                            background: paymentForm.feeType === (b.originalName || b.name).toLowerCase() && !paymentForm.studentFeeId ? '#fffbeb' : 'transparent'
+                                                        }}
+                                                    >
+                                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                            <span style={{ fontWeight: 600, color: '#4b5563' }}>{b.name}</span>
+                                                            {b.frequency === 'monthly' && (
+                                                                <span style={{ fontSize: '0.7rem', color: '#64748b' }}>₹{b.monthlyAmount?.toLocaleString()}/month</span>
+                                                            )}
+                                                        </div>
+                                                        <span style={{ fontWeight: 700, color: '#be123c' }}>₹{b.pending.toLocaleString()}</span>
+                                                    </div>
+                                                ))}
+                                                {(!totals?.breakdown || totals.breakdown.filter(b => b.pending > 0).length === 0) && (
+                                                    <div style={{ padding: '1rem', textAlign: 'center', color: '#64748b', fontSize: '0.85rem' }}>
+                                                        All fees appear to be paid.
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', justifyContent: 'center' }}>
+                                                <button
+                                                    onClick={handleSyncFees}
+                                                    className="btn-secondary"
+                                                    style={{ fontSize: '0.85rem' }}
+                                                >
+                                                    Sync Records
+                                                </button>
+                                                <button
+                                                    className="btn-primary"
+                                                    style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', background: '#d97706', borderColor: '#d97706' }}
+                                                    onClick={() => {
+                                                        const firstPending = totals?.breakdown?.find(b => b.pending > 0);
+                                                        setPaymentForm({
+                                                            ...paymentForm,
+                                                            amount: firstPending?.pending || 0,
+                                                            feeType: (firstPending?.originalName || firstPending?.name || 'tuition').toLowerCase(),
+                                                            month: new Date().getMonth() + 1,
+                                                            year: new Date().getFullYear(),
+                                                            studentFeeId: null
+                                                        });
+                                                        setManualEntry(true);
+                                                    }}
+                                                >
+                                                    Record Payment
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                                             {activeDues.map((due) => (
                                                 <div
@@ -378,11 +443,6 @@ const RecordPayment = () => {
                                                 </div>
                                             ))}
                                         </div>
-                                    ) : (
-                                        <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
-                                            <CheckCircle size={48} style={{ marginBottom: '1rem', color: '#10b981', opacity: 0.5 }} />
-                                            <p>Record is clear.</p>
-                                        </div>
                                     )}
                                 </>
                             ) : (
@@ -407,9 +467,15 @@ const RecordPayment = () => {
                                         className="form-select"
                                         value={paymentForm.feeType}
                                         onChange={(e) => setPaymentForm({ ...paymentForm, feeType: e.target.value })}
-                                        disabled={!manualEntry}
+                                        disabled={!manualEntry && activeDues.length > 0}
                                     >
-                                        {feeTypes.map(type => <option key={type.id} value={type.name.toLowerCase()}>{type.name}</option>)}
+                                        {feeTypes.filter(type => {
+                                            if (!selectedStudent || !totals?.breakdown) return true;
+                                            // Only show if it's in breakdown with pending > 0 OR if it's currently selected
+                                            const normalizedTypeName = type.name.toLowerCase();
+                                            const isInBreakdown = totals.breakdown.find(b => (b.originalName || b.name).toLowerCase() === normalizedTypeName);
+                                            return !isInBreakdown || isInBreakdown.pending > 0 || paymentForm.feeType === normalizedTypeName;
+                                        }).map(type => <option key={type.id} value={type.name.toLowerCase()}>{type.name}</option>)}
                                         <option value="other">Other</option>
                                     </select>
                                 </div>
@@ -421,13 +487,24 @@ const RecordPayment = () => {
                                         <input
                                             type="number"
                                             className="form-input"
-                                            style={{ paddingLeft: '30px', fontSize: '1.5rem', height: '56px', fontWeight: 700 }}
+                                            style={{
+                                                paddingLeft: '30px',
+                                                fontSize: '1.5rem',
+                                                height: '56px',
+                                                fontWeight: 700,
+                                                borderColor: selectedStudent && totals?.breakdown?.find(b => (b.originalName || b.name).toLowerCase() === paymentForm.feeType && paymentForm.amount > b.pending) ? '#ef4444' : '#e2e8f0'
+                                            }}
                                             placeholder="0.00"
                                             value={paymentForm.amount}
                                             onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })}
                                             required
                                         />
                                     </div>
+                                    {selectedStudent && totals?.breakdown?.find(b => (b.originalName || b.name).toLowerCase() === paymentForm.feeType && Number(paymentForm.amount) > Number(b.pending)) && (
+                                        <div style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '0.4rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                            <AlertCircle size={14} /> Amount exceeds pending balance of ₹{totals.breakdown.find(b => (b.originalName || b.name).toLowerCase() === paymentForm.feeType).pending.toLocaleString()}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="form-group">
@@ -537,7 +614,7 @@ const RecordPayment = () => {
                                             </div>
                                         </div>
                                         <div style={{ textAlign: 'right' }}>
-                                            <div style={{ fontWeight: 800, color: '#16a34a' }}>₹{parseFloat(p.amount || 0).toLocaleString()}</div>
+                                            <div style={{ fontWeight: 800, color: '#16a34a' }}>₹{parseFloat(p.amount || p.amount_paid || 0).toLocaleString()}</div>
                                             {p.receipt_number && <div style={{ fontSize: '0.85rem', color: '#64748b' }}>Receipt: {p.receipt_number}</div>}
                                         </div>
                                     </div>

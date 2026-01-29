@@ -173,23 +173,23 @@ const StudentFeeDetails = () => {
         </div>
     );
 
+    // Use backend values for totals
     const totalDue = totals?.totalDue ?? studentFees.reduce((sum, f) => sum + parseFloat(f.amount_due || 0), 0);
     const totalPaid = totals?.totalPaid ?? studentFees.reduce((sum, f) => sum + parseFloat(f.amount_paid || 0), 0);
     const totalPending = totals?.totalPending ?? studentFees.reduce((sum, f) => sum + parseFloat(f.amount_pending || 0), 0);
     const paidPercentage = totalDue > 0 ? Math.round((totalPaid / totalDue) * 100) : 0;
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-    const paidByType = studentPayments.reduce((acc, p) => {
-        const key = p.fee_type_name || p.fee_type || 'Other';
-        acc[key] = (acc[key] || 0) + parseFloat(p.amount || 0);
+    // Use breakdown from totals if available, otherwise fallback to record-based grouping
+    const breakdown = totals?.breakdown || [];
+
+    const paidByType = breakdown.reduce((acc, b) => {
+        if (b.paid > 0) acc[b.name] = b.paid;
         return acc;
     }, {});
 
-    const pendingByType = studentFees.reduce((acc, f) => {
-        const pending = parseFloat(f.amount_pending || 0);
-        if (pending <= 0) return acc;
-        const key = f.fee_type_name || f.fee_type || 'Other';
-        acc[key] = (acc[key] || 0) + pending;
+    const pendingByType = breakdown.reduce((acc, b) => {
+        if (b.pending > 0) acc[b.name] = b.pending;
         return acc;
     }, {});
 
@@ -325,10 +325,15 @@ const StudentFeeDetails = () => {
                             <div style={{ color: '#94a3b8' }}>No pending dues.</div>
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                                {Object.entries(pendingByType).sort((a, b) => b[1] - a[1]).map(([k, v]) => (
-                                    <div key={k} style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
-                                        <div style={{ fontWeight: 700, color: '#334155' }}>{k}</div>
-                                        <div style={{ fontWeight: 900, color: '#e11d48' }}>₹{Number(v).toLocaleString()}</div>
+                                {breakdown.filter(b => b.pending > 0).sort((a, b) => b.pending - a.pending).map((b) => (
+                                    <div key={b.name} style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'center' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                            <div style={{ fontWeight: 700, color: '#334155' }}>{b.name}</div>
+                                            {b.frequency === 'monthly' && (
+                                                <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600 }}>₹{b.monthlyAmount?.toLocaleString()}/month</div>
+                                            )}
+                                        </div>
+                                        <div style={{ fontWeight: 900, color: '#e11d48' }}>₹{Number(b.pending).toLocaleString()}</div>
                                     </div>
                                 ))}
                             </div>
@@ -456,7 +461,7 @@ const StudentFeeDetails = () => {
                                                         {payment.payment_mode || '-'}
                                                     </td>
                                                     <td style={{ padding: '0.85rem 0.75rem', textAlign: 'right', fontWeight: 900, color: '#16a34a' }}>
-                                                        ₹{Number(payment.amount_paid || payment.amount || 0).toLocaleString()}
+                                                        ₹{Number(payment.amount || 0).toLocaleString()}
                                                     </td>
                                                     <td style={{ padding: '0.85rem 0.75rem', textAlign: 'center' }}>
                                                         <button className="btn-secondary" type="button" onClick={() => printReceipt(payment)} style={{ height: 34, padding: '0 0.75rem', fontSize: '0.85rem', fontWeight: 700, borderRadius: 10, display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>

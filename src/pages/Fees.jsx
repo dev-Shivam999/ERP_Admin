@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Receipt, IndianRupee, Download, Filter, Eye, Printer, Save, Settings, BookOpen, Shirt, Bus, Sparkles, Calendar } from 'lucide-react';
@@ -8,7 +8,7 @@ import { fetchClasses } from '../store/slices/academicSlice';
 const Fees = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { pendingFees = [], payments = [], feeSummary, feeStructures = [], loading ,error} = useSelector((state) => state.fees || {});
+    const { pendingFees = [], payments = [], feeSummary, feeStructures = [], loading, error } = useSelector((state) => state.fees || {});
     const { classes = [] } = useSelector((state) => state.academic || {});
 
     const [activeTab, setActiveTab] = useState('collection'); // 'collection', 'structure', 'reports'
@@ -51,7 +51,7 @@ const Fees = () => {
         dispatch(fetchPendingFees({ search }));
         dispatch(fetchFeePayments());
         dispatch(fetchFeeStructures());
-        dispatch(fetchClasses());
+        // dispatch(fetchClasses());
     }, [dispatch, search]);
 
     const handleGenerateBulk = async () => {
@@ -255,25 +255,32 @@ const Fees = () => {
                                     </thead>
                                     <tbody>
                                         {pendingFees.length > 0 ? (
-                                            pendingFees.map((student) => (
-                                                <tr key={student.student_id}>
-                                                    <td><strong>{student.student_name}</strong></td>
-                                                    <td>{student.admission_number}</td>
-                                                    <td>{student.class_name}</td>
-                                                    <td>{student.section_name}</td>
-                                                    <td className="text-right">₹{parseFloat(student.total_due).toLocaleString('en-IN')}</td>
-                                                    <td className="text-right text-green-600">₹{parseFloat(student.total_paid).toLocaleString('en-IN')}</td>
-                                                    <td className="text-right text-red-600"><strong>₹{parseFloat(student.total_pending).toLocaleString('en-IN')}</strong></td>
-                                                    <td className="text-center">
-                                                        <button
-                                                            className="btn btn-primary btn-sm"
-                                                            onClick={() => navigate(`/fees/student/${student.student_id}`)}
-                                                        >
-                                                            Submit Fees
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))
+                                            pendingFees.map((student) => {
+                                                const isPaid = parseFloat(student.total_pending || 0) <= 0;
+                                                return (
+                                                    <tr key={student.student_id}>
+                                                        <td><strong>{student.student_name}</strong></td>
+                                                        <td>{student.admission_number}</td>
+                                                        <td>{student.class_name}</td>
+                                                        <td>{student.section_name}</td>
+                                                        <td className="text-right">₹{parseFloat(student.total_due).toLocaleString('en-IN')}</td>
+                                                        <td className="text-right text-green-600">₹{parseFloat(student.total_paid).toLocaleString('en-IN')}</td>
+                                                        <td className="text-right" style={{ color: isPaid ? '#10b981' : '#ef4444' }}>
+                                                            <strong>
+                                                                {isPaid ? '✓ Complete' : `₹${parseFloat(student.total_pending).toLocaleString('en-IN')}`}
+                                                            </strong>
+                                                        </td>
+                                                        <td className="text-center">
+                                                            <button
+                                                                className={`btn btn-sm ${isPaid ? 'btn-outline' : 'btn-primary'}`}
+                                                                onClick={() => navigate(`/fees/student/${student.student_id}`)}
+                                                            >
+                                                                {isPaid ? 'View' : 'Submit Fees'}
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                )
+                                            })
                                         ) : (
                                             <tr>
                                                 <td colSpan={8} style={{ textAlign: 'center', color: '#6b7280', padding: '2rem' }}>
