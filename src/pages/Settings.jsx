@@ -159,7 +159,8 @@ const Settings = () => {
             dispatch(fetchFeeMetadata()).then(res => {
                 if (res.payload) setMetadata(res.payload);
             });
-            dispatch(initializeFeeStructures()); // Initialize records for new type
+            await dispatch(initializeFeeStructures()).unwrap(); // Initialize records for new type
+            dispatch(fetchFeeStructures()); // Refresh the grouped state
         } catch (error) {
             alert(error || 'Failed to create fee type');
         } finally {
@@ -694,10 +695,10 @@ const Settings = () => {
                                                                 onChange={(e) => {
                                                                     const newStructure = [...feeSettings.feeStructure];
                                                                     if (!newStructure[index].items[key]) {
-                                                                        // If it doesn't exist, we can't edit it yet (should initialize first)
-                                                                        return;
+                                                                        // Provide a temporary structure if missing, though initialize should have handled it
+                                                                        newStructure[index].items[key] = { amount: 0 };
                                                                     }
-                                                                    newStructure[index].items[key].amount = parseFloat(e.target.value) || 0;
+                                                                    newStructure[index].items[key].amount = e.target.value === '' ? '' : parseFloat(e.target.value) || 0;
                                                                     setFeeSettings(prev => ({ ...prev, feeStructure: newStructure }));
                                                                 }}
                                                             />

@@ -24,6 +24,7 @@ import Academic from "./pages/Academic";
 import CollectionDetail from "./pages/CollectionDetail";
 import Homework from "./pages/Homework";
 import Payroll from "./pages/Payroll";
+import Certificates from "./pages/Certificates";
 import AdmitCardManager from "./pages/AdmitCardManager";
 import { Toaster } from "react-hot-toast";
 import "./index.css";
@@ -328,6 +329,16 @@ function AppRoutes() {
           <ProtectedRoute>
             <PageWrapper title="Homework Management">
               <Homework />
+            </PageWrapper>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/certificates"
+        element={
+          <ProtectedRoute>
+            <PageWrapper title="Certificate Management">
+              <Certificates />
             </PageWrapper>
           </ProtectedRoute>
         }

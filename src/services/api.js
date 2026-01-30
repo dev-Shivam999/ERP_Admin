@@ -100,4 +100,13 @@ export const examAPI = {
     getAdmitCard: (id, params) => api.get(`/exams/${id}/admit-card`, { params }),
 };
 
+// Certificate APIs
+export const certificateAPI = {
+    getPending: () => api.get('/certificates/pending'),
+    getToday: () => api.get('/certificates/today'),
+    updateStatus: (id, data) => api.put(`/certificates/${id}/status`, data),
+    delete: (id) => api.delete(`/certificates/${id}`),
+    getData: (id) => api.get(`/certificates/${id}/data`),
+};
+
 export default api;

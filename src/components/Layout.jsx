@@ -47,6 +47,7 @@ const Layout = ({ title, children }) => {
     { path: "/exams/admit-cards", icon: FileText, label: "Admit Cards" },
     { path: "/results", icon: BarChart3, label: "Results Management" },
     { path: "/teachers", icon: GraduationCap, label: "Teachers" },
+    { path: "/certificates", icon: FileText, label: "Certificate Requests" },
     { path: "/payroll", icon: IndianRupee, label: "Payroll" },
     { path: "/academic", icon: Layers, label: "Academic Architecture" },
     { path: "/calendar", icon: Calendar, label: "Calendar" },
