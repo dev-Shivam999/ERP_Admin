@@ -52,7 +52,7 @@ const Teachers = () => {
             return;
         }
 
-        const newPassword = window.prompt(`Set a new password for ${teacher.first_name} ${teacher.last_name || ''}.\n\nDefault password is usually the Employee ID: ${teacher.employee_id}`);
+        const newPassword = window.prompt(`Set a NEW password for ${teacher.first_name} ${teacher.last_name || ''}.\n\nLogin Email: ${teacher.email || 'N/A'}\n\nType the new password below and click OK:`);
         if (newPassword) {
             try {
                 await authAPI.adminResetPassword(teacher.user_id, newPassword);

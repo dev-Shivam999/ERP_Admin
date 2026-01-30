@@ -408,13 +408,20 @@ const Students = () => {
                                 </div>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                                     <div>
-                                        <span style={{ fontSize: '0.75rem', color: '#6b7280', display: 'block' }}>App Login ID:</span>
-                                        <code style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>{selectedStudent.admission_number}</code>
+                                        <span style={{ fontSize: '0.75rem', color: '#6b7280', display: 'block' }}>Login ID (Email):</span>
+                                        <code style={{ fontSize: '1rem', fontWeight: 700, color: '#0369a1' }}>{selectedStudent.email}</code>
                                     </div>
                                     <div>
-                                        <span style={{ fontSize: '0.75rem', color: '#6b7280', display: 'block' }}>Default Password:</span>
+                                        <span style={{ fontSize: '0.75rem', color: '#6b7280', display: 'block' }}>Active Password:</span>
+                                        <code style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0369a1' }}>{selectedStudent.password_hash || selectedStudent.admission_number}</code>
+                                    </div>
+                                    <div>
+                                        <span style={{ fontSize: '0.75rem', color: '#6b7280', display: 'block' }}>Admission No:</span>
                                         <code style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>{selectedStudent.admission_number}</code>
                                     </div>
+                                </div>
+                                <div style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: '#6b7280', borderTop: '1px solid #bae6fd', paddingTop: '0.5rem' }}>
+                                    <p style={{ margin: 0 }}><strong>Note:</strong> The password shown above is the currently set password for this student. If nothing was changed, it defaults to the Admission Number.</p>
                                 </div>
                             </div>
                         </div>
