@@ -67,6 +67,12 @@ const Students = () => {
     };
 
     const handleResetPassword = async (student) => {
+        console.log(student);
+        if (!student.user_id) {
+            alert('RECOVERY FAILED: Student record is incomplete (missing user link). Please try refreshing the list.');
+            return;
+        }
+
         const newPassword = window.prompt(`ADMIN CONTROL: Set NEW password for ${student.first_name}.\n\nDefault was: ${student.admission_number}`);
         if (newPassword) {
             try {
@@ -239,6 +245,7 @@ const Students = () => {
                                     <th>Section</th>
                                     <th>Stream</th>
                                     <th>Category</th>
+                                    <th>Email</th>
                                     <th>Phone</th>
                                     <th>Status</th>
                                     <th>Actions</th>
@@ -275,6 +282,13 @@ const Students = () => {
                                                 <span className={`badge ${getCategoryBadge(student.category)}`}>
                                                     {(student.category || 'N/A').toUpperCase()}
                                                 </span>
+                                            </td>
+                                            <td>
+                                                {student.email ? (
+                                                    <span style={{ fontSize: '0.875rem', color: '#4b5563' }}>
+                                                        {student.email}
+                                                    </span>
+                                                ) : '-'}
                                             </td>
                                             <td>
                                                 {student.phone && (
@@ -375,6 +389,7 @@ const Students = () => {
                                     <p><strong>Father:</strong> {selectedStudent.father_name || 'N/A'}</p>
                                     <p><strong>Mother:</strong> {selectedStudent.mother_name || 'N/A'}</p>
                                     <p><strong>Phone:</strong> {selectedStudent.phone || 'N/A'}</p>
+                                    <p><strong>Email:</strong> {selectedStudent.email || 'N/A'}</p>
                                 </div>
                             </div>
 

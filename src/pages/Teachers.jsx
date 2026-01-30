@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
-    Plus, Search, Edit, Trash2, GraduationCap, Award, Fingerprint, RefreshCw, Shield
+    Plus, Search, Edit, Trash2, GraduationCap, Award, Fingerprint, RefreshCw, Shield, Mail, Phone
 } from 'lucide-react';
 import { fetchTeachers, deleteTeacher, clearError } from '../store/slices/teachersSlice';
 import { authAPI } from '../services/api';
@@ -47,6 +47,11 @@ const Teachers = () => {
     };
 
     const handleResetPassword = async (teacher) => {
+        if (!teacher.user_id) {
+            alert('RECOVERY FAILED: Teacher record is incomplete (missing user link). Please try refreshing the list.');
+            return;
+        }
+
         const newPassword = window.prompt(`Set a new password for ${teacher.first_name} ${teacher.last_name || ''}.\n\nDefault password is usually the Employee ID: ${teacher.employee_id}`);
         if (newPassword) {
             try {
@@ -122,129 +127,142 @@ const Teachers = () => {
                 </div>
             </div>
 
-                {loading ? (
-                    <div className="card">
-                        <div className="card-body" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem', color: '#94a3b8', gap: '0.75rem' }}>
-                            <Fingerprint size={28} />
-                            <span style={{ fontWeight: 700 }}>Loading teachers…</span>
-                        </div>
+            {loading ? (
+                <div className="card">
+                    <div className="card-body" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem', color: '#94a3b8', gap: '0.75rem' }}>
+                        <Fingerprint size={28} />
+                        <span style={{ fontWeight: 700 }}>Loading teachers…</span>
                     </div>
-                ) : filteredTeachers.length === 0 ? (
-                    <div className="card">
-                        <div className="card-body" style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
-                            <GraduationCap size={48} style={{ marginBottom: '0.75rem', opacity: 0.6 }} />
-                            <div style={{ fontWeight: 700 }}>No teachers found.</div>
-                            <div style={{ marginTop: '0.25rem' }}>Try a different search or add a teacher.</div>
-                        </div>
+                </div>
+            ) : filteredTeachers.length === 0 ? (
+                <div className="card">
+                    <div className="card-body" style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
+                        <GraduationCap size={48} style={{ marginBottom: '0.75rem', opacity: 0.6 }} />
+                        <div style={{ fontWeight: 700 }}>No teachers found.</div>
+                        <div style={{ marginTop: '0.25rem' }}>Try a different search or add a teacher.</div>
                     </div>
-                ) : (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '1.25rem' }}>
-                        {filteredTeachers.map((teacher) => (
-                            <div key={teacher.id} className="card">
-                                <div className="card-body" style={{ display: 'grid', gap: '0.9rem' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                                            <div style={{
-                                                width: 44,
-                                                height: 44,
-                                                borderRadius: 12,
-                                                background: '#4f46e5',
-                                                color: 'white',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                fontWeight: 900
-                                            }}>
-                                                {(teacher.first_name || '?')[0]?.toUpperCase()}
-                                            </div>
-                                            <div>
-                                                <div style={{ fontWeight: 900, color: '#0f172a', fontSize: '1.05rem' }}>
-                                                    {teacher.first_name} {teacher.last_name}
-                                                </div>
-                                                <div style={{ color: '#64748b', fontWeight: 700, fontSize: '0.9rem', textTransform: 'capitalize' }}>
-                                                    {teacher.designation?.replace('_', ' ') || 'Teacher'}
-                                                </div>
-                                            </div>
+                </div>
+            ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '1.25rem' }}>
+                    {filteredTeachers.map((teacher) => (
+                        <div key={teacher.id} className="card">
+                            <div className="card-body" style={{ display: 'grid', gap: '0.9rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                                        <div style={{
+                                            width: 44,
+                                            height: 44,
+                                            borderRadius: 12,
+                                            background: '#4f46e5',
+                                            color: 'white',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontWeight: 900
+                                        }}>
+                                            {(teacher.first_name || '?')[0]?.toUpperCase()}
                                         </div>
-                                        <div style={{ display: 'flex', gap: '0.35rem' }}>
-                                            <button className="btn-secondary" type="button" onClick={() => navigate(`/teachers/edit/${teacher.id}`)} style={{ height: 36, width: 36, padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                <Edit size={16} />
-                                            </button>
-                                            <button className="btn-secondary" type="button" onClick={() => handleDelete(teacher.id)} style={{ height: 36, width: 36, padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: '#fff1f2', borderColor: '#fecdd3', color: '#e11d48' }}>
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                                        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '0.75rem' }}>
-                                            <div style={{ color: '#64748b', fontWeight: 700, fontSize: '0.8rem' }}>Employee ID</div>
-                                            <div style={{ fontWeight: 900, color: '#0f172a' }}>{teacher.employee_id || '-'}</div>
-                                        </div>
-                                        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '0.75rem' }}>
-                                            <div style={{ color: '#64748b', fontWeight: 700, fontSize: '0.8rem' }}>Qualification</div>
-                                            <div style={{ fontWeight: 800, color: '#0f172a' }}>{teacher.qualification || '-'}</div>
-                                        </div>
-                                    </div>
-
-                                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                        <button className="btn-secondary" type="button" onClick={() => handleOpenPermissions(teacher)} style={{ height: 38, padding: '0 0.9rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700 }}>
-                                            <Shield size={16} /> Permissions
-                                        </button>
-                                        <button className="btn-secondary" type="button" onClick={() => handleResetPassword(teacher)} style={{ height: 38, padding: '0 0.9rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700 }}>
-                                            <RefreshCw size={16} /> Reset password
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* Permissions Modal */}
-                {selectedTeacherForPermissions && (
-                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.55)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
-                        <div className="card" style={{ width: '100%', maxWidth: 560 }}>
-                            <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
-                                <div>
-                                    <h3 className="card-title" style={{ margin: 0 }}>Permissions</h3>
-                                    <div style={{ color: '#64748b', fontWeight: 600, fontSize: '0.9rem' }}>
-                                        {selectedTeacherForPermissions.first_name} {selectedTeacherForPermissions.last_name || ''}
-                                    </div>
-                                </div>
-                                <button className="btn-secondary" type="button" onClick={() => setSelectedTeacherForPermissions(null)} style={{ height: 40, padding: '0 0.95rem', fontWeight: 700 }}>
-                                    Close
-                                </button>
-                            </div>
-
-                            <div className="card-body" style={{ display: 'grid', gap: '0.75rem' }}>
-                                {PERMISSIONS_LIST.map(p => (
-                                    <label key={p.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.85rem 0.9rem', border: '1px solid #e2e8f0', borderRadius: 12, background: tempPermissions[p.id] ? '#eef2ff' : '#fff', cursor: 'pointer' }}>
-                                        <input
-                                            type="checkbox"
-                                            checked={!!tempPermissions[p.id]}
-                                            onChange={() => handleTogglePermission(p.id)}
-                                            style={{ marginTop: 3 }}
-                                        />
                                         <div>
-                                            <div style={{ fontWeight: 800, color: '#0f172a' }}>{p.label}</div>
-                                            <div style={{ color: '#64748b', fontWeight: 600, fontSize: '0.9rem' }}>{p.desc}</div>
+                                            <div style={{ fontWeight: 900, color: '#0f172a', fontSize: '1.05rem' }}>
+                                                {teacher.first_name} {teacher.last_name}
+                                            </div>
+                                            <div style={{ color: '#64748b', fontWeight: 700, fontSize: '0.9rem', textTransform: 'capitalize' }}>
+                                                {teacher.designation?.replace('_', ' ') || 'Teacher'}
+                                            </div>
                                         </div>
-                                    </label>
-                                ))}
-                            </div>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '0.35rem' }}>
+                                        <button className="btn-secondary" type="button" onClick={() => navigate(`/teachers/edit/${teacher.id}`)} style={{ height: 36, width: 36, padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <Edit size={16} />
+                                        </button>
+                                        <button className="btn-secondary" type="button" onClick={() => handleDelete(teacher.id)} style={{ height: 36, width: 36, padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: '#fff1f2', borderColor: '#fecdd3', color: '#e11d48' }}>
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                </div>
 
-                            <div className="card-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
-                                <button className="btn-secondary" type="button" onClick={() => setSelectedTeacherForPermissions(null)} style={{ height: 40, padding: '0 0.95rem', fontWeight: 700 }}>
-                                    Cancel
-                                </button>
-                                <button className="btn-primary" type="button" onClick={handleSavePermissions} style={{ height: 40, padding: '0 0.95rem', fontWeight: 700 }}>
-                                    Save
-                                </button>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '0.75rem' }}>
+                                        <div style={{ color: '#64748b', fontWeight: 700, fontSize: '0.8rem' }}>Employee ID</div>
+                                        <div style={{ fontWeight: 900, color: '#0f172a' }}>{teacher.employee_id || '-'}</div>
+                                    </div>
+                                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '0.75rem' }}>
+                                        <div style={{ color: '#64748b', fontWeight: 700, fontSize: '0.8rem' }}>Qualification</div>
+                                        <div style={{ fontWeight: 800, color: '#0f172a' }}>{teacher.qualification || '-'}</div>
+                                    </div>
+                                </div>
+
+                                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '0.85rem' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: '#475569', fontSize: '0.85rem' }}>
+                                            <Mail size={16} style={{ color: '#4f46e5' }} />
+                                            <span style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{teacher.email || 'No Email'}</span>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: '#475569', fontSize: '0.85rem' }}>
+                                            <Phone size={16} style={{ color: '#10b981' }} />
+                                            <span style={{ fontWeight: 600 }}>{teacher.phone || 'No Phone'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                    <button className="btn-secondary" type="button" onClick={() => handleOpenPermissions(teacher)} style={{ height: 38, padding: '0 0.9rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700 }}>
+                                        <Shield size={16} /> Permissions
+                                    </button>
+                                    <button className="btn-secondary" type="button" onClick={() => handleResetPassword(teacher)} style={{ height: 38, padding: '0 0.9rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700 }}>
+                                        <RefreshCw size={16} /> Reset password
+                                    </button>
+                                </div>
                             </div>
                         </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Permissions Modal */}
+            {selectedTeacherForPermissions && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.55)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
+                    <div className="card" style={{ width: '100%', maxWidth: 560 }}>
+                        <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+                            <div>
+                                <h3 className="card-title" style={{ margin: 0 }}>Permissions</h3>
+                                <div style={{ color: '#64748b', fontWeight: 600, fontSize: '0.9rem' }}>
+                                    {selectedTeacherForPermissions.first_name} {selectedTeacherForPermissions.last_name || ''}
+                                </div>
+                            </div>
+                            <button className="btn-secondary" type="button" onClick={() => setSelectedTeacherForPermissions(null)} style={{ height: 40, padding: '0 0.95rem', fontWeight: 700 }}>
+                                Close
+                            </button>
+                        </div>
+
+                        <div className="card-body" style={{ display: 'grid', gap: '0.75rem' }}>
+                            {PERMISSIONS_LIST.map(p => (
+                                <label key={p.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.85rem 0.9rem', border: '1px solid #e2e8f0', borderRadius: 12, background: tempPermissions[p.id] ? '#eef2ff' : '#fff', cursor: 'pointer' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={!!tempPermissions[p.id]}
+                                        onChange={() => handleTogglePermission(p.id)}
+                                        style={{ marginTop: 3 }}
+                                    />
+                                    <div>
+                                        <div style={{ fontWeight: 800, color: '#0f172a' }}>{p.label}</div>
+                                        <div style={{ color: '#64748b', fontWeight: 600, fontSize: '0.9rem' }}>{p.desc}</div>
+                                    </div>
+                                </label>
+                            ))}
+                        </div>
+
+                        <div className="card-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                            <button className="btn-secondary" type="button" onClick={() => setSelectedTeacherForPermissions(null)} style={{ height: 40, padding: '0 0.95rem', fontWeight: 700 }}>
+                                Cancel
+                            </button>
+                            <button className="btn-primary" type="button" onClick={handleSavePermissions} style={{ height: 40, padding: '0 0.95rem', fontWeight: 700 }}>
+                                Save
+                            </button>
+                        </div>
                     </div>
-                )}
+                </div>
+            )}
         </div>
     );
 };
