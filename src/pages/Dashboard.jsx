@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { Users, IndianRupee, AlertTriangle, Table, BarChart2, PieChart as PieChartIcon } from 'lucide-react';
+import { Users, IndianRupee, AlertTriangle, Table, BarChart2, PieChart as PieChartIcon, FileText } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { fetchDashboardStats } from '../store/slices/dashboardSlice';
 
@@ -85,6 +85,17 @@ const Dashboard = () => {
                     <div className="stat-content">
                         <h3>{stats.totalStudents}</h3>
                         <p>Active Students</p>
+                    </div>
+                </div>
+
+                <div className="stat-card" onClick={() => navigate('/certificates')} style={{ cursor: 'pointer', borderLeft: stats.pendingCertificates > 0 ? '4px solid #f59e0b' : 'none' }}>
+                    <div className="stat-icon warning" style={{ background: stats.pendingCertificates > 0 ? '#fef3c7' : '#f1f5f9', color: stats.pendingCertificates > 0 ? '#d97706' : '#64748b' }}>
+                        <FileText size={24} />
+                    </div>
+                    <div className="stat-content">
+                        <h3>{stats.pendingCertificates}</h3>
+                        <p>Cert. Requests</p>
+                        {stats.pendingCertificates > 0 && <span style={{ fontSize: '0.75rem', color: '#d97706', fontWeight: 600 }}>Action Required</span>}
                     </div>
                 </div>
             </div>

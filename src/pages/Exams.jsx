@@ -255,13 +255,13 @@ const Exams = () => {
                                     <button className="btn-secondary" style={{ height: 36, padding: '0 0.9rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
                                         <FileText size={16} /> Marks
                                     </button>
-                                    {isCompleted && !exam.is_published ? (
+                                    {!exam.is_published ? (
                                         <button className="btn-primary" onClick={() => handlePublish(exam.id)} style={{ height: 36, padding: '0 0.9rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-                                            <Check size={16} /> Publish
+                                            <Check size={16} /> Publish Results
                                         </button>
                                     ) : (
-                                        <button className="btn-secondary" disabled style={{ height: 36, padding: '0 0.9rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#94a3b8' }}>
-                                            <Check size={16} /> {exam.is_published ? 'Published' : 'Locked'}
+                                        <button className="btn-secondary" disabled style={{ height: 36, padding: '0 0.9rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#16a34a', borderColor: '#bbf7d0', background: '#f0fdf4' }}>
+                                            <ShieldCheck size={16} /> Results Published
                                         </button>
                                     )}
                                 </div>

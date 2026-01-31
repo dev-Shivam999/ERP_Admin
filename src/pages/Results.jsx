@@ -26,7 +26,7 @@ import {
   clearStudentMarks,
 } from "../store/slices/resultsSlice";
 import { fetchExams } from "../store/slices/examsSlice";
-import { fetchClasses } from "../store/slices/academicSlice";
+import { fetchClasses, fetchSectionsByClass } from "../store/slices/academicSlice";
 
 const Results = () => {
   const dispatch = useDispatch();
@@ -34,7 +34,7 @@ const Results = () => {
   const { students, subjects, studentMarks, markEntryLoading, loading } =
     useSelector((state) => state.results || {});
   const { exams } = useSelector((state) => state.exams || {});
-  const { classes } = useSelector((state) => state.academic || {});
+  const { classes, sectionsByClass } = useSelector((state) => state.academic || {});
 
   // Selection states
   const [selectedClass, setSelectedClass] = useState("");
@@ -58,6 +58,7 @@ const Results = () => {
   useEffect(() => {
     if (selectedClass) {
       dispatch(fetchSubjectsForClass(selectedClass));
+      dispatch(fetchSectionsByClass(selectedClass));
     }
   }, [dispatch, selectedClass]);
 
@@ -176,10 +177,7 @@ const Results = () => {
   };
 
   const getSelectedClassSections = () => {
-    console.log(classes,"",selectedClass);
-    
-    const classObj = classes?.find((c) => c.id === selectedClass);
-    return classObj?.sections || [];
+    return sectionsByClass?.[selectedClass] || [];
   };
 
   const canProceedToStep2 =
