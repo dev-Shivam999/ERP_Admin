@@ -52,6 +52,20 @@ export const fetchSubjectsForClass = createAsyncThunk(
     }
 );
 
+export const fetchSubjectsForSession = createAsyncThunk(
+    'results/fetchSubjectsForSession',
+    async ({ sessionId, classId }, { rejectWithValue }) => {
+        try {
+            const response = await api.get(`/results/sessions/${sessionId}/subjects`, {
+                params: { classId }
+            });
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to fetch exam subjects');
+        }
+    }
+);
+
 export const enterStudentMarks = createAsyncThunk(
     'results/enterStudentMarks',
     async ({ sessionId, studentId, marks, classId, sectionId }, { rejectWithValue }) => {
@@ -228,6 +242,20 @@ const resultsSlice = createSlice({
                 state.subjects = action.payload;
             })
             .addCase(fetchSubjectsForClass.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+
+            // Fetch Subjects for Session
+            .addCase(fetchSubjectsForSession.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchSubjectsForSession.fulfilled, (state, action) => {
+                state.loading = false;
+                state.subjects = action.payload;
+            })
+            .addCase(fetchSubjectsForSession.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             })

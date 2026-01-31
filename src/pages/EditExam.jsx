@@ -6,14 +6,15 @@ import {
     Sparkles, Calendar, Layers, ShieldCheck, Send, Info, AlertTriangle, Fingerprint, Check, Wand2
 } from 'lucide-react';
 import { fetchExamById, updateExam, fetchExamSchedule } from '../store/slices/examsSlice';
-import { fetchClasses, createClass } from '../store/slices/academicSlice';
+import { fetchClasses, createClass, fetchSubjects } from '../store/slices/academicSlice';
+import { fetchSubjectsForClass } from '../store/slices/resultsSlice';
 
 const EditExam = () => {
     const { id } = useParams();
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { selectedExam, examSchedules, loading } = useSelector((state) => state.exams);
-    const { classes } = useSelector((state) => state.attendance);
+    const { classes, subjects: allSubjects } = useSelector((state) => state.academic);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -31,6 +32,7 @@ const EditExam = () => {
         dispatch(fetchExamById(id));
         dispatch(fetchExamSchedule(id));
         dispatch(fetchClasses());
+        dispatch(fetchSubjects());
     }, [dispatch, id]);
 
     useEffect(() => {
@@ -344,12 +346,25 @@ const EditExam = () => {
 
                             {/* Add Flow */}
                             <div style={{ marginTop: '3rem', padding: '2rem', background: 'rgba(255,255,255,0.03)', borderRadius: '2.5rem', display: 'flex', gap: '1.5rem', alignItems: 'center', border: '3px dashed rgba(255,255,255,0.1)' }}>
+                                <select
+                                    value={newSubject.name}
+                                    onChange={(e) => {
+                                        const selected = allSubjects.find(s => s.name === e.target.value);
+                                        setNewSubject({ ...newSubject, name: e.target.value });
+                                    }}
+                                    style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: '#fff', fontWeight: 700, fontSize: '1.1rem', appearance: 'none' }}
+                                >
+                                    <option value="" style={{ color: '#000' }}>Select or Type Subject...</option>
+                                    {allSubjects.map(sub => (
+                                        <option key={sub.id} value={sub.name} style={{ color: '#000' }}>{sub.name}</option>
+                                    ))}
+                                </select>
                                 <input
                                     type="text"
-                                    placeholder="Annotate New Subject..."
+                                    placeholder="Or custom name..."
                                     value={newSubject.name}
                                     onChange={(e) => setNewSubject({ ...newSubject, name: e.target.value })}
-                                    style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: '#fff', fontWeight: 700, fontSize: '1.1rem' }}
+                                    style={{ flex: 0.5, background: 'rgba(255,255,255,0.1)', border: 'none', outline: 'none', color: '#fff', fontWeight: 700, fontSize: '0.9rem', borderRadius: '1rem', padding: '0.5rem 1rem' }}
                                 />
                                 <button type="button" onClick={addSubject} style={{ padding: '1.1rem 2.5rem', background: '#fff', color: '#0f172a', fontWeight: 900, borderRadius: '1.25rem', border: 'none', cursor: 'pointer', textTransform: 'uppercase', fontSize: '11px', letterSpacing: '0.15em' }}>Apply Entry</button>
                             </div>

@@ -187,8 +187,21 @@ const Teachers = () => {
                                         <div style={{ fontWeight: 900, color: '#0f172a' }}>{teacher.employee_id || '-'}</div>
                                     </div>
                                     <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '0.75rem' }}>
-                                        <div style={{ color: '#64748b', fontWeight: 700, fontSize: '0.8rem' }}>Qualification</div>
-                                        <div style={{ fontWeight: 800, color: '#0f172a' }}>{teacher.qualification || '-'}</div>
+                                        <div style={{ color: '#64748b', fontWeight: 700, fontSize: '0.8rem' }}>Login Password</div>
+                                        <div style={{ fontWeight: 900, color: '#4f46e5' }}>{teacher.password_hash || '-'}</div>
+                                    </div>
+                                </div>
+
+                                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '0.75rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <div>
+                                            <div style={{ color: '#64748b', fontWeight: 700, fontSize: '0.8rem' }}>Qualification</div>
+                                            <div style={{ fontWeight: 800, color: '#0f172a' }}>{teacher.qualification || '-'}</div>
+                                        </div>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <div style={{ color: '#64748b', fontWeight: 700, fontSize: '0.8rem' }}>Experience</div>
+                                            <div style={{ fontWeight: 800, color: '#0f172a' }}>{teacher.experience_years || 0} Years</div>
+                                        </div>
                                     </div>
                                 </div>
 

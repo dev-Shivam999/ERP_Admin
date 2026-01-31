@@ -21,6 +21,7 @@ import {
 import {
   fetchStudentsForMarkEntry,
   fetchSubjectsForClass,
+  fetchSubjectsForSession,
   enterStudentMarks,
   fetchStudentMarks,
   clearStudentMarks,
@@ -58,10 +59,23 @@ const Results = () => {
 
   useEffect(() => {
     if (selectedClass) {
-      dispatch(fetchSubjectsForClass(selectedClass));
       dispatch(fetchSectionsByClass(selectedClass));
+
+      // If no exam is selected, fetch all class subjects as fallback
+      if (!selectedExam) {
+        dispatch(fetchSubjectsForClass(selectedClass));
+      }
     }
-  }, [dispatch, selectedClass]);
+  }, [dispatch, selectedClass, selectedExam]);
+
+  useEffect(() => {
+    if (selectedClass && selectedExam && selectedYear) {
+      dispatch(fetchSubjectsForSession({
+        sessionId: `${selectedExam}-${selectedYear}`,
+        classId: selectedClass
+      }));
+    }
+  }, [dispatch, selectedClass, selectedExam, selectedYear]);
 
   useEffect(() => {
     if (selectedClass && selectedSection && selectedExam) {
@@ -79,11 +93,11 @@ const Results = () => {
     setSelectedStudent(student);
     setActiveStep(3);
 
-    // Initialize marks for all subjects
+    // Initialize marks for all subjects with exam schedule defaults
     const initialMarks = {};
     subjects.forEach((subject) => {
       initialMarks[subject.id] = {
-        maxMarks: 100,
+        maxMarks: subject.max_marks || 100,
         obtainedMarks: 0,
       };
     });
