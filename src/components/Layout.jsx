@@ -52,6 +52,7 @@ const Layout = ({ title, children }) => {
     { path: "/academic", icon: Layers, label: "Academic Architecture" },
     { path: "/calendar", icon: Calendar, label: "Calendar" },
     { path: "/settings", icon: Settings, label: "Settings" },
+    { path: "/push-notifications", icon: Settings, label: "Push Notifications" },
   ];
 
   return (

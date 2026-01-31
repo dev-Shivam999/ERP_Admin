@@ -26,6 +26,7 @@ import Homework from "./pages/Homework";
 import Payroll from "./pages/Payroll";
 import Certificates from "./pages/Certificates";
 import AdmitCardManager from "./pages/AdmitCardManager";
+import PushNotifications from "./pages/PushNotifications";
 import { Toaster } from "react-hot-toast";
 import "./index.css";
 
@@ -339,6 +340,16 @@ function AppRoutes() {
           <ProtectedRoute>
             <PageWrapper title="Certificate Management">
               <Certificates />
+            </PageWrapper>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/push-notifications"
+        element={
+          <ProtectedRoute>
+            <PageWrapper title="Push Notifications">
+              <PushNotifications />
             </PageWrapper>
           </ProtectedRoute>
         }
