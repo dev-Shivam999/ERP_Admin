@@ -7,7 +7,7 @@ export const fetchResultSessions = createAsyncThunk(
     async (params = {}, { rejectWithValue }) => {
         try {
             const response = await api.get('/results/sessions', { params });
-            return response.data.data;
+            return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch result sessions');
         }
@@ -19,7 +19,7 @@ export const createResultSession = createAsyncThunk(
     async (sessionData, { rejectWithValue }) => {
         try {
             const response = await api.post('/results/sessions', sessionData);
-            return response.data.data;
+            return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to create result session');
         }
@@ -33,7 +33,7 @@ export const fetchStudentsForMarkEntry = createAsyncThunk(
             const response = await api.get(`/results/sessions/${sessionId}/students`, {
                 params: { classId, sectionId }
             });
-            return response.data.data;
+            return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch students');
         }
@@ -45,7 +45,7 @@ export const fetchSubjectsForClass = createAsyncThunk(
     async (classId, { rejectWithValue }) => {
         try {
             const response = await api.get(`/results/classes/${classId}/subjects`);
-            return response.data.data;
+            return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch subjects');
         }
@@ -61,7 +61,7 @@ export const enterStudentMarks = createAsyncThunk(
                 classId,
                 sectionId
             });
-            return response.data.data;
+            return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to enter marks');
         }
@@ -73,7 +73,7 @@ export const fetchStudentMarks = createAsyncThunk(
     async ({ sessionId, studentId }, { rejectWithValue }) => {
         try {
             const response = await api.get(`/results/sessions/${sessionId}/students/${studentId}/marks`);
-            return response.data.data;
+            return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch student marks');
         }
@@ -87,7 +87,7 @@ export const fetchClassResults = createAsyncThunk(
             const response = await api.get(`/results/sessions/${sessionId}/results`, {
                 params: { classId, sectionId }
             });
-            return response.data.data;
+            return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch class results');
         }
@@ -102,7 +102,7 @@ export const publishResults = createAsyncThunk(
                 classIds,
                 sendNotifications
             });
-            return response.data.data;
+            return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to publish results');
         }
@@ -114,7 +114,7 @@ export const fetchResultStatistics = createAsyncThunk(
     async (sessionId, { rejectWithValue }) => {
         try {
             const response = await api.get(`/results/sessions/${sessionId}/statistics`);
-            return response.data.data;
+            return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch statistics');
         }
@@ -126,7 +126,7 @@ export const fetchMyResults = createAsyncThunk(
     async (_, { rejectWithValue }) => {
         try {
             const response = await api.get('/results/my-results');
-            return response.data.data;
+            return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch my results');
         }
@@ -138,7 +138,7 @@ export const fetchStudentResult = createAsyncThunk(
     async ({ sessionId, studentId }, { rejectWithValue }) => {
         try {
             const response = await api.get(`/results/sessions/${sessionId}/students/${studentId}/result`);
-            return response.data.data;
+            return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch student result');
         }

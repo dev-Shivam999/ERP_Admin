@@ -24,6 +24,7 @@ import {
   enterStudentMarks,
   fetchStudentMarks,
   clearStudentMarks,
+  publishResults,
 } from "../store/slices/resultsSlice";
 import { fetchExams } from "../store/slices/examsSlice";
 import { fetchClasses, fetchSectionsByClass } from "../store/slices/academicSlice";
@@ -31,7 +32,7 @@ import { fetchClasses, fetchSectionsByClass } from "../store/slices/academicSlic
 const Results = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { students, subjects, studentMarks, markEntryLoading, loading } =
+  const { students, subjects, studentMarks, markEntryLoading, loading, publishLoading } =
     useSelector((state) => state.results || {});
   const { exams } = useSelector((state) => state.exams || {});
   const { classes, sectionsByClass } = useSelector((state) => state.academic || {});
@@ -157,6 +158,36 @@ const Results = () => {
       );
 
       alert("Marks saved successfully!");
+    }
+  };
+
+  const handlePublish = async () => {
+    if (!selectedClass || !selectedExam) return;
+
+    const confirmPublish = window.confirm(
+      "Are you sure you want to publish results for this class? This will make them visible to students and parents.",
+    );
+
+    if (confirmPublish) {
+      const result = await dispatch(
+        publishResults({
+          sessionId: `${selectedExam}-${selectedYear}`,
+          classIds: [selectedClass],
+          sendNotifications: true,
+        }),
+      );
+
+      if (!result.error) {
+        alert("Results published successfully!");
+        // Refresh students to show updated status
+        dispatch(
+          fetchStudentsForMarkEntry({
+            sessionId: `${selectedExam}-${selectedYear}`,
+            classId: selectedClass,
+            sectionId: selectedSection,
+          }),
+        );
+      }
     }
   };
 
@@ -405,12 +436,22 @@ const Results = () => {
                   ?.name
               }
             </h3>
-            <button
-              className="btn btn-outline"
-              onClick={() => setActiveStep(1)}
-              style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              ← Back to Filters
-            </button>
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <button
+                className="btn btn-success"
+                onClick={handlePublish}
+                disabled={publishLoading || students?.length === 0}
+                style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <Send size={18} />
+                {publishLoading ? "Publishing..." : "Publish Class Results"}
+              </button>
+              <button
+                className="btn btn-outline"
+                onClick={() => setActiveStep(1)}
+                style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                ← Back to Filters
+              </button>
+            </div>
           </div>
           <div className="table-container">
             {loading ? (
