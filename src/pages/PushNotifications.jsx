@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Send, RefreshCw, Smartphone, User } from 'lucide-react';
+import { Send, RefreshCw, Smartphone, User, Trash2 } from 'lucide-react';
 import api from '../services/api';
 
 const PushNotifications = () => {
@@ -16,8 +16,10 @@ const PushNotifications = () => {
         setLoading(true);
         try {
             const response = await api.get('/notifications/fcm-users');
-            if (response.data.success) {
-                setUsers(response.data.data);
+            console.log('API Response:', response);
+            if (response.success) {
+                console.log('Setting users:', response.data);
+                setUsers(response.data);
             }
         } catch (error) {
             console.error('Failed to fetch FCM users:', error);
@@ -41,7 +43,7 @@ const PushNotifications = () => {
                 message: testMessage.message
             });
 
-            if (response.data.success) {
+            if (response.success) {
                 alert(`✅ Notification sent to ${userName}!`);
             }
         } catch (error) {
@@ -49,6 +51,23 @@ const PushNotifications = () => {
             alert(error.response?.data?.message || 'Failed to send notification');
         } finally {
             setSending(null);
+        }
+    };
+
+    const handleDeleteToken = async (userId, userName) => {
+        if (!window.confirm(`Are you sure you want to remove the FCM token for ${userName}? They will no longer receive notifications until they login again.`)) {
+            return;
+        }
+
+        try {
+            const response = await api.post('/notifications/remove-token', { userId });
+            if (response.success) {
+                alert(`✅ Token removed for ${userName}`);
+                fetchUsers(); // Refresh list
+            }
+        } catch (error) {
+            console.error('Failed to remove token:', error);
+            alert('Failed to remove token');
         }
     };
 
@@ -199,18 +218,29 @@ const PushNotifications = () => {
                                             </code>
                                         </td>
                                         <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                                            <button
-                                                className="btn btn-primary"
-                                                style={{ padding: '6px 12px', fontSize: '13px' }}
-                                                onClick={() => sendTestNotification(user.id, `${user.first_name} ${user.last_name}`)}
-                                                disabled={sending === user.id}
-                                            >
-                                                {sending === user.id ? (
-                                                    'Sending...'
-                                                ) : (
-                                                    <><Send size={14} /> Send</>
-                                                )}
-                                            </button>
+                                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                                                <button
+                                                    className="btn btn-danger"
+                                                    style={{ padding: '6px 12px', fontSize: '13px', backgroundColor: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5' }}
+                                                    onClick={() => handleDeleteToken(user.id, `${user.first_name} ${user.last_name}`)}
+                                                    disabled={sending === user.id}
+                                                    title="Remove FCM Token"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                                <button
+                                                    className="btn btn-primary"
+                                                    style={{ padding: '6px 12px', fontSize: '13px' }}
+                                                    onClick={() => sendTestNotification(user.id, `${user.first_name} ${user.last_name}`)}
+                                                    disabled={sending === user.id}
+                                                >
+                                                    {sending === user.id ? (
+                                                        'Sending...'
+                                                    ) : (
+                                                        <><Send size={14} /> Send</>
+                                                    )}
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
