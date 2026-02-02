@@ -115,17 +115,31 @@ const teachersSlice = createSlice({
             .addCase(fetchTeacherById.fulfilled, (state, action) => {
                 state.selectedTeacher = action.payload;
             })
+            .addCase(createTeacher.pending, (state) => {
+                state.loading = true;
+            })
             .addCase(createTeacher.fulfilled, (state, action) => {
                 state.teachers.unshift(action.payload);
+                state.loading = false;
             })
             .addCase(createTeacher.rejected, (state, action) => {
                 state.error = action.payload;
+                state.loading = false;
+            })
+            .addCase(updateTeacher.pending, (state) => {
+                state.loading = true;
+                // Add a specific 'updating' flag if needed, but 'loading' covers general async actions
             })
             .addCase(updateTeacher.fulfilled, (state, action) => {
+                state.loading = false;
                 const index = state.teachers.findIndex(t => t.id === action.payload.id);
                 if (index !== -1) {
                     state.teachers[index] = { ...state.teachers[index], ...action.payload };
                 }
+            })
+            .addCase(updateTeacher.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
             })
             .addCase(deleteTeacher.fulfilled, (state, action) => {
                 state.teachers = state.teachers.filter(t => t.id !== action.payload);

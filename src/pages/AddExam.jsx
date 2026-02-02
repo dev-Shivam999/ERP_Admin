@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
-    ArrowLeft, Plus, Trash2, BookOpen, Clock, Calendar, Layers, Check
+    ArrowLeft, Plus, Trash2, BookOpen, Clock, Calendar, Layers, Check, Loader2
 } from 'lucide-react';
 import { createExam } from '../store/slices/examsSlice';
 import { fetchClasses, createClass } from '../store/slices/academicSlice';
@@ -122,7 +122,8 @@ const AddExam = () => {
                         Cancel
                     </button>
                     <button type="submit" form="add-exam-form" className="btn-primary" disabled={loading} style={{ height: 42, padding: '0 1.1rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Plus size={18} /> {loading ? 'Saving…' : 'Create exam'}
+                        {loading ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
+                        {loading ? 'Creating...' : 'Create exam'}
                     </button>
                 </div>
             </div>

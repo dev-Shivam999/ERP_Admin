@@ -1,7 +1,9 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
-import { IndianRupee, Save, Filter, Search, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import {
+    IndianRupee, Save, Filter, Search, CheckCircle, AlertCircle, Clock,
+    ChevronLeft, ChevronRight, Download, PieChart, Wallet, Users, Banknote, X, Calendar, Loader2
+} from 'lucide-react';
 import { payrollAPI } from '../services/api';
 
 const Payroll = () => {
@@ -9,6 +11,7 @@ const Payroll = () => {
     const [year, setYear] = useState(new Date().getFullYear());
     const [payrollData, setPayrollData] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [processing, setProcessing] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
 
     // Modal State
@@ -27,6 +30,16 @@ const Payroll = () => {
         { value: 7, label: 'July' }, { value: 8, label: 'August' }, { value: 9, label: 'September' },
         { value: 10, label: 'October' }, { value: 11, label: 'November' }, { value: 12, label: 'December' }
     ];
+
+    // Dynamic Year Generation (Current Year - 2 to + 5)
+    const years = useMemo(() => {
+        const currentYear = new Date().getFullYear();
+        const yearRange = [];
+        for (let i = currentYear - 2; i <= currentYear; i++) {
+            yearRange.push(i);
+        }
+        return yearRange;
+    }, []);
 
     useEffect(() => {
         fetchPayroll();
@@ -61,6 +74,7 @@ const Payroll = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setProcessing(true);
         try {
             await payrollAPI.processPayroll({
                 teacherId: selectedTeacher.teacher_id,
@@ -73,6 +87,8 @@ const Payroll = () => {
         } catch (error) {
             console.error('Process payroll error:', error);
             alert('Failed to process payroll');
+        } finally {
+            setProcessing(false);
         }
     };
 
@@ -83,78 +99,177 @@ const Payroll = () => {
         item.employee_id.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    // Statistics
+    const stats = useMemo(() => {
+        const totalEmployees = payrollData.length;
+        const paidCount = payrollData.filter(p => p.status === 'paid').length;
+        const totalPaidAmount = payrollData
+            .filter(p => p.status === 'paid')
+            .reduce((sum, p) => sum + (parseFloat(p.net_salary) || 0), 0);
+        const pendingAmount = payrollData
+            .filter(p => p.status !== 'paid')
+            .reduce((sum, p) => sum + (parseFloat(p.basic_salary) || 0), 0); // Estimate based on basic
+
+        return { totalEmployees, paidCount, totalPaidAmount, pendingAmount };
+    }, [payrollData]);
+
     const getStatusBadge = (status) => {
-        if (!status) return <span className="badge bg-secondary">Unprocessed</span>;
-        switch (status) {
-            case 'paid': return <span className="badge bg-success">Paid</span>;
-            case 'pending': return <span className="badge bg-warning text-dark">Pending</span>;
-            case 'hold': return <span className="badge bg-danger">On Hold</span>;
-            default: return <span className="badge bg-secondary">{status}</span>;
-        }
+        const defaultStyle = "badge badge-primary";
+        const styles = {
+            paid: { class: "badge badge-success", icon: CheckCircle, label: 'Paid' },
+            pending: { class: "badge badge-warning", icon: Clock, label: 'Pending' },
+            hold: { class: "badge badge-danger", icon: AlertCircle, label: 'On Hold' },
+            default: { class: "badge badge-secondary", icon: AlertCircle, label: 'Unprocessed' }
+        };
+        const config = styles[status] || styles.default;
+        const Icon = config.icon;
+
+        return (
+            <span className={config.class} style={{ gap: '0.25rem' }}>
+                <Icon size={12} /> {config.label}
+            </span>
+        );
     };
 
     return (
-        <div className="container-fluid p-4">
-            <div className="d-flex justify-content-between align-items-center mb-4">
-                <h2>Payroll Management</h2>
-                <div className="d-flex gap-2">
-                    <select className="form-select" value={month} onChange={(e) => setMonth(parseInt(e.target.value))} style={{ width: 150 }}>
+        <div className="page-content">
+            {/* Header Section */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+                <div>
+                    <h2 className="page-title">Payroll Management</h2>
+                    <div style={{ color: '#6b7280' }}>Manage salaries, payments, and compensation</div>
+                </div>
+
+                <div className="card" style={{ padding: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderRadius: '0.5rem', boxShadow: 'none', border: '1px solid #e5e7eb' }}>
+                    <div style={{ padding: '0.5rem', color: '#6b7280' }}>
+                        <Calendar size={20} />
+                    </div>
+                    <div style={{ height: '24px', width: '1px', background: '#e5e7eb' }}></div>
+                    <select
+                        className="form-select"
+                        value={month}
+                        onChange={(e) => setMonth(parseInt(e.target.value))}
+                        style={{ width: 'auto', minWidth: 140, border: 'none', boxShadow: 'none', background: 'transparent', fontWeight: 500 }}
+                    >
                         {months.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
                     </select>
-                    <select className="form-select" value={year} onChange={(e) => setYear(parseInt(e.target.value))} style={{ width: 100 }}>
-                        {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
+                    <div style={{ height: '24px', width: '1px', background: '#e5e7eb' }}></div>
+                    <select
+                        className="form-select"
+                        value={year}
+                        onChange={(e) => setYear(parseInt(e.target.value))}
+                        style={{ width: 'auto', border: 'none', boxShadow: 'none', background: 'transparent', fontWeight: 500 }}
+                    >
+                        {years.map(y => <option key={y} value={y}>{y}</option>)}
                     </select>
                 </div>
             </div>
 
-            <div className="card shadow-sm mb-4">
-                <div className="card-header bg-white py-3">
-                    <div className="input-group" style={{ maxWidth: 300 }}>
-                        <span className="input-group-text bg-light border-end-0"><Search size={18} /></span>
+            {/* Stats Grid */}
+            <div className="stats-grid">
+                <div className="stat-card">
+                    <div className="stat-icon primary">
+                        <Wallet size={24} />
+                    </div>
+                    <div className="stat-content">
+                        <h3>₹{stats.totalPaidAmount.toLocaleString()}</h3>
+                        <p>Total Disbursed</p>
+                    </div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-icon warning">
+                        <Banknote size={24} />
+                    </div>
+                    <div className="stat-content">
+                        <h3>₹{stats.pendingAmount.toLocaleString()}</h3>
+                        <p>Estimated Pending</p>
+                    </div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-icon success">
+                        <CheckCircle size={24} />
+                    </div>
+                    <div className="stat-content">
+                        <h3>{stats.paidCount} / {stats.totalEmployees}</h3>
+                        <p>Employees Paid</p>
+                    </div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-icon primary">
+                        <Users size={24} />
+                    </div>
+                    <div className="stat-content">
+                        <h3>{stats.totalEmployees}</h3>
+                        <p>Total Staff</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Filters & Table */}
+            <div className="card">
+                <div className="card-header">
+                    <h3 className="card-title">Employee Payroll List</h3>
+                    <div className="search-box">
+                        <Search />
                         <input
                             type="text"
-                            className="form-control border-start-0 ps-0"
-                            placeholder="Search teacher..."
+                            placeholder="Search by name or ID..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
                 </div>
-                <div className="table-responsive">
-                    <table className="table table-hover align-middle mb-0">
-                        <thead className="bg-light">
+
+                <div className="table-container">
+                    <table>
+                        <thead>
                             <tr>
-                                <th>Teacher</th>
+                                <th>Employee</th>
                                 <th>Designation</th>
                                 <th>Basic Pay</th>
                                 <th>Net Salary</th>
                                 <th>Status</th>
                                 <th>Payment Date</th>
-                                <th className="text-end">Actions</th>
+                                <th style={{ textAlign: 'right' }}>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan="7" className="text-center py-5">Loading payroll data...</td></tr>
+                                <tr><td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>Loading payroll records...</td></tr>
                             ) : filteredData.length === 0 ? (
-                                <tr><td colSpan="7" className="text-center py-5">No teachers found</td></tr>
+                                <tr>
+                                    <td colSpan="7" style={{ textAlign: 'center', padding: '3rem' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', color: '#9ca3af' }}>
+                                            <Search size={32} />
+                                            <p>No teachers found matching your search.</p>
+                                        </div>
+                                    </td>
+                                </tr>
                             ) : (
                                 filteredData.map((item) => (
                                     <tr key={item.teacher_id}>
                                         <td>
-                                            <div className="d-flex flex-column">
-                                                <span className="fw-medium">{item.first_name} {item.last_name}</span>
-                                                <small className="text-muted">{item.employee_id}</small>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                                <div className="user-avatar">
+                                                    {item.first_name?.[0]}{item.last_name?.[0]}
+                                                </div>
+                                                <div>
+                                                    <div style={{ fontWeight: 600, color: '#1f2937' }}>{item.first_name} {item.last_name}</div>
+                                                    <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>{item.employee_id}</div>
+                                                </div>
                                             </div>
                                         </td>
                                         <td>{item.designation}</td>
-                                        <td>{item.basic_salary ? `₹${item.basic_salary} ` : '-'}</td>
-                                        <td className="fw-bold">{item.net_salary ? `₹${item.net_salary} ` : '-'}</td>
+                                        <td>{item.basic_salary ? `₹${item.basic_salary.toLocaleString()}` : '-'}</td>
+                                        <td style={{ fontWeight: 600 }}>{item.net_salary ? `₹${item.net_salary.toLocaleString()}` : '-'}</td>
                                         <td>{getStatusBadge(item.status)}</td>
-                                        <td>{item.payment_date ? new Date(item.payment_date).toLocaleDateString() : '-'}</td>
-                                        <td className="text-end">
+                                        <td style={{ fontSize: '0.9rem', color: '#4b5563' }}>
+                                            {item.payment_date ? new Date(item.payment_date).toLocaleDateString() : '-'}
+                                        </td>
+                                        <td style={{ textAlign: 'right' }}>
                                             <button
-                                                className="btn btn-sm btn-outline-primary"
+                                                className={item.payroll_id ? 'btn btn-outline' : 'btn btn-primary'}
+                                                style={{ padding: '0.5rem 1rem', fontSize: '0.8125rem' }}
                                                 onClick={() => handleProcessClick(item)}
                                             >
                                                 {item.payroll_id ? 'Edit' : 'Process'}
@@ -170,63 +285,71 @@ const Payroll = () => {
 
             {/* Process Salary Modal */}
             {selectedTeacher && (
-                <div className="modal-overlay" style={{
-                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                    backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 9999,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center'
-                }} onClick={() => setSelectedTeacher(null)}>
-                    <div className="modal-content rounded shadow-lg" style={{
-                        maxWidth: '500px',
-                        width: '90%',
-                        backgroundColor: '#fff',
-                        border: '1px solid #e5e7eb',
-                        zIndex: 10000
-                    }} onClick={e => e.stopPropagation()}>
-                        <div className="modal-header border-bottom p-3 d-flex justify-content-between align-items-center">
-                            <h5 className="m-0">Process Salary - {selectedTeacher.first_name}</h5>
-                            <button type="button" className="btn-close" onClick={() => setSelectedTeacher(null)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
+                <div className="modal-overlay" onClick={() => setSelectedTeacher(null)}>
+                    <div className="modal" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <div>
+                                <h3 className="modal-title">Process Salary</h3>
+                                <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                                    {selectedTeacher.first_name} {selectedTeacher.last_name} ({selectedTeacher.employee_id})
+                                </div>
+                            </div>
+                            <button className="btn btn-outline" style={{ border: 'none', padding: '0.5rem' }} onClick={() => setSelectedTeacher(null)}>
+                                <X size={20} />
+                            </button>
                         </div>
+
                         <form onSubmit={handleSubmit}>
-                            <div className="modal-body p-4">
-                                <div className="mb-3">
+                            <div className="modal-body">
+                                <div className="form-group">
                                     <label className="form-label">Basic Salary (₹)</label>
                                     <input
                                         type="number"
                                         className="form-input"
                                         required
+                                        placeholder="0.00"
                                         value={formData.basicSalary}
                                         onChange={e => setFormData({ ...formData, basicSalary: e.target.value })}
+                                        style={{ fontWeight: 600, fontSize: '1.1rem' }}
                                     />
                                 </div>
-                                <div className="row g-3 mb-3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                    <div>
-                                        <label className="form-label">Allowances (+)</label>
+
+                                <div className="grid-2">
+                                    <div className="form-group">
+                                        <label className="form-label" style={{ color: '#059669' }}>Allowances (+)</label>
                                         <input
                                             type="number"
                                             className="form-input"
                                             value={formData.allowances}
                                             onChange={e => setFormData({ ...formData, allowances: e.target.value })}
+                                            placeholder="0.00"
                                         />
                                     </div>
-                                    <div>
-                                        <label className="form-label">Deductions (-)</label>
+                                    <div className="form-group">
+                                        <label className="form-label" style={{ color: '#dc2626' }}>Deductions (-)</label>
                                         <input
                                             type="number"
                                             className="form-input"
                                             value={formData.deductions}
                                             onChange={e => setFormData({ ...formData, deductions: e.target.value })}
+                                            placeholder="0.00"
                                         />
                                     </div>
                                 </div>
-                                <div className="mb-3">
-                                    <label className="form-label fw-bold">Net Salary Calculation: </label>
-                                    <div className="fs-5 p-2 bg-light rounded text-center border" style={{ backgroundColor: '#f9fafb', fontWeight: 'bold' }}>
-                                        ₹ {((parseFloat(formData.basicSalary) || 0) + (parseFloat(formData.allowances) || 0) - (parseFloat(formData.deductions) || 0)).toFixed(2)}
+
+                                <div style={{ padding: '1rem', background: '#f9fafb', borderRadius: '0.5rem', marginBottom: '1.5rem', border: '1px dashed #e5e7eb' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                                        <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>Net Payable Amount</span>
+                                        <span className="badge badge-success">Auto-calc</span>
+                                    </div>
+                                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#111827' }}>
+                                        ₹ {((parseFloat(formData.basicSalary) || 0) + (parseFloat(formData.allowances) || 0) - (parseFloat(formData.deductions) || 0)).toLocaleString()}
                                     </div>
                                 </div>
-                                <div className="row g-3 mb-3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                    <div>
-                                        <label className="form-label">Status</label>
+
+                                <div className="grid-2">
+                                    <div className="form-group">
+                                        <label className="form-label">Payment Status</label>
                                         <select
                                             className="form-select"
                                             value={formData.status}
@@ -237,7 +360,7 @@ const Payroll = () => {
                                             <option value="hold">On Hold</option>
                                         </select>
                                     </div>
-                                    <div>
+                                    <div className="form-group">
                                         <label className="form-label">Payment Date</label>
                                         <input
                                             type="date"
@@ -248,10 +371,12 @@ const Payroll = () => {
                                     </div>
                                 </div>
                             </div>
-                            <div className="modal-footer border-top p-3 d-flex justify-content-end gap-2">
-                                <button type="button" className="btn btn-outline-secondary" onClick={() => setSelectedTeacher(null)}>Cancel</button>
-                                <button type="submit" className="btn btn-primary d-flex align-items-center gap-2">
-                                    <Save size={18} /> Save & Process
+
+                            <div className="modal-footer">
+                                <button type="button" className="btn btn-secondary" onClick={() => setSelectedTeacher(null)} disabled={processing}>Cancel</button>
+                                <button type="submit" className="btn btn-primary" disabled={processing}>
+                                    {processing ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                                    {processing ? 'Processing...' : 'Save & Process'}
                                 </button>
                             </div>
                         </form>

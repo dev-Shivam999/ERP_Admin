@@ -190,14 +190,30 @@ const examsSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload;
             })
+            .addCase(createExam.pending, (state) => {
+                state.loading = true;
+            })
             .addCase(createExam.fulfilled, (state, action) => {
+                state.loading = false;
                 state.exams.unshift(action.payload);
             })
+            .addCase(createExam.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            .addCase(updateExam.pending, (state) => {
+                state.loading = true;
+            })
             .addCase(updateExam.fulfilled, (state, action) => {
+                state.loading = false;
                 const index = state.exams.findIndex(e => e.id === action.payload.id);
                 if (index !== -1) {
                     state.exams[index] = { ...state.exams[index], ...action.payload };
                 }
+            })
+            .addCase(updateExam.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
             })
             .addCase(deleteExam.fulfilled, (state, action) => {
                 state.exams = state.exams.filter(e => e.id !== action.payload);

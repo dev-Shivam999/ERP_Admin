@@ -97,7 +97,7 @@ const Academic = () => {
       } else {
         alert(
           result.error.message ||
-            "Failed to delete class. Please ensure it has no students or sections.",
+          "Failed to delete class. Please ensure it has no students or sections.",
         );
       }
     }
