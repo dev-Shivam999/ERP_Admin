@@ -6,11 +6,22 @@ export const fetchDashboardStats = createAsyncThunk(
     'dashboard/fetchStats',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await api.get('/dashboard/stats');
-            if (response.success) {
-                return response.data;
-            }
-            return rejectWithValue(response.message || 'Failed to fetch stats');
+            const [generalRes, financialRes, analyticsRes] = await Promise.all([
+                api.get('/dashboard/stats/general'),
+                api.get('/dashboard/stats/financial'),
+                api.get('/dashboard/stats/analytics')
+            ]);
+
+            // Merge correct data or defaults
+            const general = generalRes.success ? generalRes.data : {};
+            const financial = financialRes.success ? financialRes.data : {};
+            const analytics = analyticsRes.success ? analyticsRes.data : {};
+
+            return {
+                ...general,
+                ...financial,
+                ...analytics
+            };
         } catch (error) {
             return rejectWithValue(error.message || 'Failed to fetch dashboard stats');
         }
