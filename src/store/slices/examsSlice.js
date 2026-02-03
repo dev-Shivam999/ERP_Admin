@@ -184,7 +184,18 @@ const examsSlice = createSlice({
             })
             .addCase(fetchExams.fulfilled, (state, action) => {
                 state.loading = false;
-                state.exams = action.payload.exams || action.payload || [];
+                const exams = action.payload.exams || action.payload || [];
+                state.exams = exams;
+
+                // Populate stats and rules from aggregated data
+                exams.forEach(exam => {
+                    if (exam.stats) {
+                        state.examStats[exam.id] = exam.stats;
+                    }
+                    if (exam.schedule) {
+                        state.examSchedules[exam.id] = exam.schedule;
+                    }
+                });
             })
             .addCase(fetchExams.rejected, (state, action) => {
                 state.loading = false;

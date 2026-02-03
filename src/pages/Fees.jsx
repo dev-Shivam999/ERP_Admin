@@ -48,9 +48,12 @@ const Fees = () => {
     });
 
     useEffect(() => {
-        dispatch(fetchPendingFees({ search }));
-        dispatch(fetchFeePayments());
-        dispatch(fetchFeeStructures());
+       const fetch = async () => {
+     await Promise.allSettled ([  dispatch(fetchPendingFees({ search })),
+        dispatch(fetchFeePayments()),
+        dispatch(fetchFeeStructures())])
+       }
+       fetch();
         // dispatch(fetchClasses());
     }, [dispatch, search]);
 

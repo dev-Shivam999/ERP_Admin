@@ -14,17 +14,7 @@ const Exams = () => {
     const { exams, examStats, examSchedules, loading, error } = useSelector((state) => state.exams);
 
     useEffect(() => {
-        dispatch(fetchExams()).then((res) => {
-            if (res.payload) {
-                const examList = res.payload.exams || res.payload;
-                if (Array.isArray(examList)) {
-                    examList.forEach(exam => {
-                        dispatch(fetchExamStats(exam.id));
-                        dispatch(fetchExamSchedule(exam.id));
-                    });
-                }
-            }
-        });
+        dispatch(fetchExams());
     }, [dispatch]);
 
     useEffect(() => {
@@ -163,10 +153,10 @@ const Exams = () => {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))', gap: '1.25rem' }}>
                     {exams.map((exam) => {
                         const isCompleted = new Date() > new Date(exam.end_date);
-                        const stats = examStats[exam.id] || [];
+                        const stats = examStats[exam.id] || {};
                         const schedule = examSchedules[exam.id] || [];
-                        const totalStudents = stats.reduce((acc, s) => acc + (parseInt(s.total_students) || 0), 0);
-                        const studentsWithMarks = stats.reduce((acc, s) => acc + (parseInt(s.students_with_marks) || 0), 0);
+                        const totalStudents = parseInt(stats.total_students) || 0;
+                        const studentsWithMarks = parseInt(stats.students_with_marks) || 0;
                         const completionRate = totalStudents > 0 ? Math.round((studentsWithMarks / totalStudents) * 100) : 0;
 
                         return (

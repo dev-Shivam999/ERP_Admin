@@ -40,8 +40,13 @@ const Attendance = () => {
     const isSeniorClass = currentClassObj?.name?.includes('11') || currentClassObj?.name?.includes('12');
 
     useEffect(() => {
-        dispatch(fetchClasses());
-        dispatch(fetchAttendanceSummary(selectedDate));
+        const fetchInitialData = async () => {
+            await Promise.allSettled([
+                dispatch(fetchClasses()),
+                dispatch(fetchAttendanceSummary(selectedDate))
+            ]);
+        };
+        fetchInitialData();
     }, [dispatch, selectedDate]);
 
     useEffect(() => {
