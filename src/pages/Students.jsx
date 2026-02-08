@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Eye, Edit, Trash2, Download, UserPlus, Phone, GraduationCap, RefreshCw, FileSpreadsheet, FileText } from 'lucide-react';
+import { Plus, Search, Eye, Edit, Trash2, Download, UserPlus, Phone, GraduationCap, RefreshCw, FileSpreadsheet, FileText, Printer } from 'lucide-react';
 import { fetchStudents, deleteStudent, clearError } from '../store/slices/studentsSlice';
 import { authAPI } from '../services/api';
 
@@ -427,6 +427,13 @@ const Students = () => {
                         </div>
                         <div className="modal-footer">
                             <button className="btn btn-outline" onClick={() => setSelectedStudent(null)}>Close</button>
+                            <button
+                                className="btn btn-outline"
+                                onClick={() => window.open(`/students/print/${selectedStudent.id}`, '_blank')}
+                                title="Print Student Profile"
+                            >
+                                <Printer size={16} /> Print Profile
+                            </button>
                             <button className="btn btn-primary" onClick={() => { setSelectedStudent(null); handleEdit(selectedStudent.id); }}>
                                 <Edit size={16} /> Edit Student
                             </button>

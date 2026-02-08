@@ -190,11 +190,27 @@ const AddStudent = () => {
                 toast.error(result.payload?.message || 'Failed to update student');
             }
         } else {
+            // Open window immediately to avoid popup blocker
+
+
             const result = await dispatch(createStudent(payload));
             if (!result.error) {
                 toast.success(`Student created! Admission No: ${result.payload?.admissionNumber}`);
+
+                const printWindow = window.open('', '_blank');
+                if (printWindow) {
+                    printWindow.document.write('Loading...');
+                }
+                // Navigate print window or close if failed
+                if (result.payload?.id && printWindow) {
+                    printWindow.location.href = `/students/print/${result.payload.id}`;
+                } else if (printWindow) {
+                    printWindow.close();
+                }
+
                 navigate('/students');
             } else {
+                if (printWindow) printWindow.close();
                 toast.error(result.payload?.message || result.error?.message || 'Failed to create student');
             }
         }

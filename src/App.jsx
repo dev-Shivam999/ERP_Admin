@@ -26,6 +26,7 @@ import Homework from "./pages/Homework";
 import Payroll from "./pages/Payroll";
 import Certificates from "./pages/Certificates";
 import AdmitCardManager from "./pages/AdmitCardManager";
+import StudentPrint from "./pages/StudentPrint";
 import PushNotifications from "./pages/PushNotifications";
 import { Toaster } from "react-hot-toast";
 import "./index.css";
@@ -112,6 +113,15 @@ function AppRoutes() {
             <PageWrapper title="Edit Student">
               <AddStudent />
             </PageWrapper>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/students/print/:id"
+        element={
+          <ProtectedRoute>
+            <StudentPrint />
           </ProtectedRoute>
         }
       />
