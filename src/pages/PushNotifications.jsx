@@ -165,6 +165,7 @@ const PushNotifications = () => {
                                     <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, fontSize: '13px', color: '#374151' }}>User</th>
                                     <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, fontSize: '13px', color: '#374151' }}>Role</th>
                                     <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, fontSize: '13px', color: '#374151' }}>Contact</th>
+                                    <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 600, fontSize: '13px', color: '#374151' }}>Devices</th>
                                     <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, fontSize: '13px', color: '#374151' }}>FCM Token</th>
                                     <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, fontSize: '13px', color: '#374151' }}>Action</th>
                                 </tr>
@@ -200,6 +201,19 @@ const PushNotifications = () => {
                                         </td>
                                         <td style={{ padding: '12px 16px', color: '#6b7280', fontSize: '13px' }}>
                                             {user.email || user.phone || '-'}
+                                        </td>
+                                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                                            <span style={{
+                                                background: '#f0fdf4',
+                                                color: '#15803d',
+                                                padding: '2px 8px',
+                                                borderRadius: '999px',
+                                                fontSize: '12px',
+                                                fontWeight: 600,
+                                                border: '1px solid #bbf7d0'
+                                            }}>
+                                                {user.device_count || 1} <Smartphone size={10} style={{ display: 'inline', marginLeft: '2px' }} />
+                                            </span>
                                         </td>
                                         <td style={{ padding: '12px 16px' }}>
                                             <code style={{
