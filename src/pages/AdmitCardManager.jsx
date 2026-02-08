@@ -1,23 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { examAPI, studentAPI } from '../services/api';
+import { examAPI } from '../services/api';
 import {
+    Download,
+    Printer,
     FileText,
     CheckCircle,
     AlertCircle,
     Search,
-    Printer,
-    User,
     ShieldCheck,
-    Filter,
-    CreditCard,
-    Users,
-    XCircle,
-    Download
+    Users
 } from 'lucide-react';
 
 const AdmitCardManager = () => {
     const [exams, setExams] = useState([]);
     const [selectedExam, setSelectedExam] = useState('');
+    const [classes, setClasses] = useState([]);
 
     // Bulk Gen State
     const [feeTypes, setFeeTypes] = useState('');
@@ -38,15 +35,12 @@ const AdmitCardManager = () => {
     useEffect(() => {
         if (selectedExam) {
             fetchStudentStatus();
+            fetchExamStats();
         } else {
             setStudents([]);
+            setClasses([]);
         }
-    }, [selectedExam, classFilter, search]); // Re-fetch on filter change (server-side filtering)
-
-    // Debounce search could be better, but for now direct effect is okay or add manual trigger
-    // Let's optimize: only fetch on selectedExam or classFilter change, 
-    // and filter search client-side if list is small? 
-    // Or use server-side. Let's stick to server-side for scalability.
+    }, [selectedExam, classFilter, search]);
 
     const fetchExams = async () => {
         try {
@@ -60,7 +54,6 @@ const AdmitCardManager = () => {
     const fetchStudentStatus = async () => {
         setListLoading(true);
         try {
-            // Debounce check manually? simplify for now
             const response = await examAPI.getStudentsStatus(selectedExam, {
                 classId: classFilter,
                 search: search
@@ -72,6 +65,17 @@ const AdmitCardManager = () => {
             console.error('Failed to fetch students', error);
         } finally {
             setListLoading(false);
+        }
+    };
+
+    const fetchExamStats = async () => {
+        try {
+            const response = await examAPI.getStats(selectedExam);
+            if (response.success && response.data) {
+                setClasses(response.data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch exam stats', error);
         }
     };
 
@@ -110,18 +114,148 @@ const AdmitCardManager = () => {
         }
     };
 
+    const handlePrintAll = async () => {
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write('<html><head><title>Print Admit Cards</title></head><body>Loading...</body></html>');
+
+        try {
+            const response = await examAPI.getBatchAdmitCards(selectedExam, { classId: classFilter });
+            if (response.success) {
+                const cards = response.data;
+                if (cards.length === 0) {
+                    printWindow.close();
+                    return alert("No issued admit cards found to print.");
+                }
+
+                // Generate HTML
+                const htmlContent = `
+                <html>
+                <head>
+                    <title>Admit Cards - ${cards[0].exam.name}</title>
+                    <style>
+                        @media print {
+                            .page-break { page-break-after: always; }
+                            body { margin: 0; padding: 0; }
+                        }
+                        body { font-family: Arial, sans-serif; background: #f0f0f0; margin: 20px; }
+                        .admit-card {
+                            width: 210mm; 
+                            min-height: 297mm;
+                            background: white;
+                            padding: 40px;
+                            box-sizing: border-box;
+                            margin: 0 auto 20px auto;
+                            position: relative;
+                            border: 1px solid #ddd;
+                        }
+                        @media print {
+                             .admit-card { border: none; margin: 0; height: 100vh; }
+                        }
+                        .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 15px; margin-bottom: 25px; }
+                        .school-name { font-size: 26px; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; }
+                        .school-address { font-size: 14px; color: #555; margin-bottom: 5px; }
+                        .exam-name { font-size: 20px; margin-top: 10px; font-weight: bold; color: #000; text-decoration: underline; }
+                        
+                        .student-info { display: flex; justify-content: space-between; margin-bottom: 25px; border: 1px solid #000; padding: 20px; border-radius: 4px; }
+                        .info-group { margin-bottom: 8px; }
+                        .info-group label { display: inline-block; width: 100px; font-size: 13px; color: #555; font-weight: bold; }
+                        .info-group span { font-size: 15px; font-weight: 600; color: #000; }
+                        
+                        table { width: 100%; border-collapse: collapse; margin-top: 15px; border: 1px solid #000; }
+                        th, td { border: 1px solid #000; padding: 12px; text-align: center; font-size: 14px; }
+                        th { background: #f8f9fa; font-weight: bold; text-transform: uppercase; }
+                        
+                        .footer { margin-top: 50px; display: flex; justify-content: space-between; padding: 0 20px; }
+                        .sign-box { text-align: center; width: 200px; border-top: 1px solid #000; padding-top: 10px; font-weight: bold; }
+                        
+                        .generated-date { position: absolute; bottom: 20px; left: 40px; font-size: 10px; color: #999; }
+                    </style>
+                </head>
+                <body>
+                    ${cards.map(item => `
+                        <div class="admit-card page-break">
+                            <div class="header">
+                                <div class="school-name">${item.exam.school_name || 'SCHOOL NAME'}</div>
+                                <div class="school-address">${item.exam.school_address || 'Address Line 1'}</div>
+                                <div class="exam-name">${item.exam.name} - ADMIT CARD</div>
+                            </div>
+                            
+                            <div class="student-info">
+                                <div style="flex: 1;">
+                                    <div class="info-group">
+                                        <label>Name:</label>
+                                        <span>${item.student.student_name}</span>
+                                    </div>
+                                    <div class="info-group">
+                                        <label>Father's Name:</label>
+                                        <span>${item.student.father_name}</span>
+                                    </div>
+                                    <div class="info-group">
+                                        <label>Admission No:</label>
+                                        <span>${item.student.admission_number}</span>
+                                    </div>
+                                </div>
+                                <div style="flex: 1; text-align: right;">
+                                     <div class="info-group">
+                                        <label style="text-align: left;">Class:</label>
+                                        <span>${item.student.class_name} - ${item.student.section_name}</span>
+                                    </div>
+                                    <div class="info-group">
+                                        <label style="text-align: left;">Roll No:</label>
+                                        <span>${item.student.roll_number || 'N/A'}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <table class="table-auto w-full">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Time</th>
+                                        <th>Subject</th>
+                                        <th>Invigilator Sign</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${item.schedule.map(sch => `
+                                        <tr>
+                                            <td>${new Date(sch.exam_date).toLocaleDateString()}</td>
+                                            <td>${sch.start_time.slice(0, 5)} - ${sch.end_time.slice(0, 5)}</td>
+                                            <td style="text-align: left; padding-left: 20px; font-weight: 500;">${sch.subject_name}</td>
+                                            <td></td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+
+                            <div class="footer">
+                                <div class="sign-box">Class Teacher</div>
+                                <div class="sign-box">Principal / Controller of Exams</div>
+                            </div>
+                            
+                            <div class="generated-date">Generated on: ${new Date().toLocaleString()}</div>
+                        </div>
+                    `).join('')}
+                    <script>
+                        window.onload = function() { window.print(); }
+                    </script>
+                </body>
+                </html>
+               `;
+
+                printWindow.document.open();
+                printWindow.document.write(htmlContent);
+                printWindow.document.close();
+            }
+        } catch (error) {
+            printWindow.close();
+            alert('Failed to load admit cards: ' + error.message);
+        }
+    };
+
     // Derived Stats
     const totalStudents = students.length;
     const issuedCount = students.filter(s => s.admit_card_status === 'issued').length;
-
-    // Get unique classes for filter dropdown (from full list or just pre-defined? 
-    // Since we filter server side, we might need a separate class list or just unique from current list if unfiltered.
-    // For now, let's extract from current list if no filter applied, or just show ID if simple.)
-    // Better: Allow user to just type Class ID? No, Dropdown is expected.
-    // For MVP, unique class names from the fetched list (if unfiltered) is okay, 
-    // but correct way is to fetch All Classes. I'll rely on the text input for Search as generic backup.
-    // Actually, let's just use uniq classes from the initial load (assuming user loads all first).
-    const uniqueClasses = [...new Set(students.map(s => s.class_name))];
 
     return (
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -216,14 +350,25 @@ const AdmitCardManager = () => {
                                                 onChange={(e) => setClassFilter(e.target.value)}
                                             >
                                                 <option value="">All Classes</option>
-                                                {uniqueClasses.map(c => <option key={c} value={c}>{c}</option>)}
+                                                {classes.map(c => (
+                                                    <option key={c.class_id} value={c.class_id}>
+                                                        {c.class_name}
+                                                    </option>
+                                                ))}
                                             </select>
 
                                             <button
-                                                className="btn btn-primary h-10 px-4 rounded-r-md rounded-l-none"
+                                                className="btn btn-primary h-10 px-4 rounded-none"
                                                 onClick={fetchStudentStatus}
                                             >
                                                 Search
+                                            </button>
+                                            <button
+                                                className="btn btn-outline-secondary h-10 px-4 rounded-r-md border-l-0"
+                                                onClick={() => handlePrintAll()}
+                                                title="Print All Issued"
+                                            >
+                                                <Printer size={18} />
                                             </button>
                                         </div>
 
@@ -259,23 +404,23 @@ const AdmitCardManager = () => {
                                                         <td className="p-4 text-gray-600">{s.class_name} - {s.section_name}</td>
                                                         <td className="p-4">
                                                             {parseFloat(s.total_pending) > 0 ? (
-                                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                                <span className="text-red-600 font-bold text-xs">
                                                                     Due: ₹{s.total_pending}
                                                                 </span>
                                                             ) : (
-                                                                <span className="inline-flex items-center gap-1 text-green-700 font-medium text-sm">
-                                                                    <CheckCircle size={14} /> Cleared
+                                                                <span className="text-green-600 font-bold text-xs">
+                                                                    Paid
                                                                 </span>
                                                             )}
                                                         </td>
                                                         <td className="p-4">
                                                             {s.admit_card_status === 'issued' ? (
-                                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                                                                <span className="text-green-600 font-bold text-xs uppercase tracking-wider">
                                                                     Issued
                                                                 </span>
                                                             ) : (
-                                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
-                                                                    Not Issued
+                                                                <span className="text-gray-400 font-bold text-xs uppercase tracking-wider">
+                                                                    Pending
                                                                 </span>
                                                             )}
                                                         </td>

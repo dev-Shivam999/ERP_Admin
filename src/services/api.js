@@ -97,7 +97,9 @@ export const examAPI = {
     generateAdmitCards: (id, data) => api.post(`/exams/${id}/admit-cards/generate`, data),
     issueAdmitCard: (id, data) => api.post(`/exams/${id}/admit-cards/issue`, data),
     getStudentsStatus: (id, params) => api.get(`/exams/${id}/admit-card-status`, { params }),
+    getBatchAdmitCards: (id, params) => api.get(`/exams/${id}/admit-cards/batch`, { params }),
     getAdmitCard: (id, params) => api.get(`/exams/${id}/admit-card`, { params }),
+    getStats: (id) => api.get(`/exams/${id}/stats`),
 };
 
 // Certificate APIs
